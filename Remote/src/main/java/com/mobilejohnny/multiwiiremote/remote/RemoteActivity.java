@@ -83,8 +83,8 @@ public class RemoteActivity extends ActionBarActivity {
     private TCP tcp;
     private UDP udp;
     private int port = 8080;
-    private String ip = "192.168.1.101";
-    private int connect_type = CONNECT_BLUETOOTH;
+    private String ip = "192.168.0.142";
+    private int connect_type = CONNECT_UDP;
     private static final int CONNECT_BLUETOOTH = 0;
     private static final int CONNECT_TCP = 1;
     private static final int CONNECT_UDP = 2;
