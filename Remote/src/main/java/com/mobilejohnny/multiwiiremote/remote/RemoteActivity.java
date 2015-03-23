@@ -16,7 +16,6 @@ import android.view.View;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
-import processing.core.PApplet;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -354,13 +353,13 @@ public class RemoteActivity extends ActionBarActivity {
 
     public void calculateRCValues() {
 //        if (overControl) { //((mouseY > minlineY) && (mouseY < maxlineY))
-//            rcThrottle =  PApplet.parseInt(map(mouseY, minlineY, maxlineY, maxRC, minRC));
+//            rcThrottle =  parseInt(map(mouseY, minlineY, maxlineY, maxRC, minRC));
 //        }
         if(unlock)
         {
-            rcRoll =  PApplet.parseInt(map(rotationY, minY, maxY, minRC, maxRC));
-            rcPitch =  PApplet.parseInt (map(rotationX, minX, maxX, maxRC, minRC));
-//        rcYaw = PApplet.parseInt( map(mouseX, 0, width, minRC, maxRC));
+            rcRoll =  parseInt(map(rotationY, minY, maxY, minRC, maxRC));
+            rcPitch =  parseInt(map(rotationX, minX, maxX, maxRC, minRC));
+//        rcYaw = parseInt( map(mouseX, 0, width, minRC, maxRC));
 //            rcPitch = 3000 - rcPitch;
         }
         else
@@ -377,44 +376,53 @@ public class RemoteActivity extends ActionBarActivity {
         rcYaw=medRC;
     }
 
-    private float map(float val ,float inputmin,float inputmax,float outputmin,float outputmax)
-    {
-        return PApplet.map(val,inputmin,inputmax,outputmin,outputmax);
-    }
-
     protected int constrain(int val,int min,int max)
     {
         return Math.max(Math.min(val, max), min);
 
     }
+    
+    private char parseChar(int val)
+    {
+        return (char)val;
+    }
+
+    private int parseInt(float val)
+    {
+        return (int)val;
+    }
+
+    public static final float map(float var0, float var1, float var2, float var3, float var4) {
+        return var3 + (var4 - var3) * ((var0 - var1) / (var2 - var1));
+    }
 
     static Character[] payloadChar = new Character[16];
 
     public void updateRCPayload() {
-        payloadChar[0] = PApplet.parseChar(rcRoll & 0xFF); //strip the 'most significant bit' (MSB) and buffer
-        payloadChar[1] = PApplet.parseChar(rcRoll >> 8 & 0xFF); //move the MSB to LSB, strip the MSB and buffer
-        payloadChar[2] = PApplet.parseChar(rcPitch & 0xFF);
-        payloadChar[3] = PApplet.parseChar(rcPitch>>8 & 0xFF);
-        payloadChar[4] = PApplet.parseChar(rcYaw & 0xFF);
-        payloadChar[5] = PApplet.parseChar(rcYaw>>8 & 0xFF);
-        payloadChar[6] = PApplet.parseChar(rcThrottle & 0xFF);
-        payloadChar[7] = PApplet.parseChar(rcThrottle>>8 & 0xFF);
+        payloadChar[0] = parseChar(rcRoll & 0xFF); //strip the 'most significant bit' (MSB) and buffer\
+        payloadChar[1] = parseChar(rcRoll >> 8 & 0xFF); //move the MSB to LSB, strip the MSB and buffer
+        payloadChar[2] = parseChar(rcPitch & 0xFF);
+        payloadChar[3] = parseChar(rcPitch >> 8 & 0xFF);
+        payloadChar[4] = parseChar(rcYaw & 0xFF);
+        payloadChar[5] = parseChar(rcYaw >> 8 & 0xFF);
+        payloadChar[6] = parseChar(rcThrottle & 0xFF);
+        payloadChar[7] = parseChar(rcThrottle >> 8 & 0xFF);
 
         //aux1
-        payloadChar[8] = PApplet.parseChar(rcAUX1 & 0xFF);
-        payloadChar[9] = PApplet.parseChar(rcAUX1>>8 & 0xFF);
+        payloadChar[8] = parseChar(rcAUX1 & 0xFF);
+        payloadChar[9] = parseChar(rcAUX1 >> 8 & 0xFF);
 
         //aux2
-        payloadChar[10] = PApplet.parseChar(rcAUX2 & 0xFF);
-        payloadChar[11] = PApplet.parseChar(rcAUX2>>8 & 0xFF);
+        payloadChar[10] = parseChar(rcAUX2 & 0xFF);
+        payloadChar[11] = parseChar(rcAUX2 >> 8 & 0xFF);
 
         //aux3
-        payloadChar[12] = PApplet.parseChar(rcAUX3 & 0xFF);
-        payloadChar[13] = PApplet.parseChar(rcAUX3>>8 & 0xFF);
+        payloadChar[12] = parseChar(rcAUX3 & 0xFF);
+        payloadChar[13] = parseChar(rcAUX3 >> 8 & 0xFF);
 
         //aux4
-        payloadChar[14] = PApplet.parseChar(rcAUX4 & 0xFF);
-        payloadChar[15] = PApplet.parseChar(rcAUX4>>8 & 0xFF);
+        payloadChar[14] = parseChar(rcAUX4 & 0xFF);
+        payloadChar[15] = parseChar(rcAUX4 >> 8 & 0xFF);
     }
 
     static private int irmsp_RC =0;
@@ -458,7 +466,7 @@ public class RemoteActivity extends ActionBarActivity {
         }
 
         checksumMSP=0;
-        pl_size = (byte)((payload != null ? PApplet.parseInt(payload.length) : 0)&0xFF);
+        pl_size = (byte)((payload != null ? parseInt(payload.length) : 0)&0xFF);
         bf.add(pl_size);
         checksumMSP ^= (pl_size&0xFF);
 
