@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+<head lang="zh">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        body{
+            margin: 0px;
+            background-color: black;
+        }
+        canvas{
+            vertical-align: middle;//解决底部3px问题
+        }
+
+    </style>
+</head>
+<body>
+<canvas></canvas>
+<script src="requestAnimationFrame.js"></script>
+<script>
+
+    var lbThrottle ;
+    var lbRoll;
+    var lbPitch;
+    var lbAUX1;
+    var lbAUX2;
+    var lbFPS;
+    var joyStick;
+    var throttle;
+    var btnArm;
+    var btnLock;
+    var font = "14px Arial";
+
+    var Color = {black : "#000",white:"#FFF",dark :"#666",green:"green",red:"red"};
+
+    var Remote = {
+        canvas:null,
+        WIDTH:720,
+        HEIGHT:1200,
+        width:0,
+        height:0,
+        ctx:null,
+        entities: [],
+        lbFPS:null,
+        lastTouch:{x:0,y:0},
+
+        Init:function() {
+            Remote.canvas = document.getElementsByTagName("canvas")[0];
+            Remote.ctx = Remote.canvas.getContext("2d");
+            Remote.Resize();
+
+            var color = Color.white;
+            var left = 10;
+            lbThrottle = new Label("Throttle:0",font,left,20,color);
+            lbRoll = new Label("Roll:0",font,left,35,color);
+            lbPitch = new Label("Pitch:0",font,left,50,color);
+            lbAUX1 = new Label("AUX1:0",font,left,65,color);
+            lbAUX2 = new Label("AUX2:0",font,left,80,color);
+            lbFPS = new Label("FPS:20",font,left,95,color);
+            throttle = new Throttle(60,120,20,Remote.height - 130,color);
+            joyStick = new JoyStick(Remote.width/2,Remote.height/2,Color.dark);
+
+            btnLock = new Button(Remote.width / 2,100,
+                    Remote.width / 2,Remote.height-100,
+                    Color.black,"",
+                    Remote.width - 72, Remote.height - 100,
+                    Color.white)
+            btnLock.touchstart(function(target){
+                if(window.JsInterface){
+                    JsInterface.setLock(false);
+
+                }
+                joyStick.Pad.setColor(Color.white);
+            });
+
+            btnLock.touchend(function(target){
+                if(window.JsInterface){
+                    JsInterface.setLock(true);
+                }
+                joyStick.Pad.setColor("#AAA");
+            });
+
+            btnArm = new ToggleButton(Remote.width - 90,10,80,50,Color.black,"Disarm",Remote.width - 72,40,Color.white);
+            btnArm.click(function(target){
+                target.setLabel(target.getToggle()?"Armed":"Disarm");
+                if(window.JsInterface){
+                    JsInterface.setArm(target.getToggle());
+                }
+
+            });
+
+            window.addEventListener("touchstart",function(event){
+                for(var i=0;i<event.targetTouches.length;i++)
+                {
+                    var p1 = event.targetTouches[i];
+                    if(p1.clientX < 300){
+                        Remote.lastTouch.id = p1.identifier;
+                        Remote.lastTouch.x = p1.clientX;
+                        Remote.lastTouch.y = p1.clientY;
+                    }
+                }
+            });
+            window.addEventListener("touchmove",function(event){
+                for(var i=0;i<event.targetTouches.length;i++) {
+                    var p1 = event.targetTouches[i];
+                    if (p1.clientX < 300 && p1.identifier==Remote.lastTouch.id) {
+                        var t = (Remote.lastTouch.y - p1.clientY) * 2;
+                        Remote.lastTouch.x = p1.clientX;
+                        Remote.lastTouch.y = p1.clientY;
+                        if (window.JsInterface) {
+                            JsInterface.addThrottle(t);
+                        }
+                    }
+                }
+            });
+
+            Remote.Loop();
+        },
+        Resize:function(){
+            Remote.width = window.innerWidth;
+            Remote.height = window.innerHeight;
+            Remote.canvas.width =  Remote.width;
+            Remote.canvas.height = Remote.height;
+        },
+        Render:function(){
+
+            Remote.Draw.fillRect(0,0,Remote.width,Remote.height,Color.black);
+
+            for (var i = 0; i < Remote.entities.length; i++) {
+
+                Remote.entities[i].Render();
+            }
+
+        },
+        Update:function(){
+            if(window.JsInterface){
+                var rc = JsInterface.getRC();
+                var rcArr = rc.split(',');
+
+                var rcThrottle = rcArr[0];
+                var roll = rcArr[1];
+                var pitch = rcArr[2];
+                var fps = JsInterface.getFPS();
+                lbFPS.setText("FPS:"+fps);
+                lbThrottle.setText("Throttle:"+rcArr[0]);
+                lbRoll.setText("Roll:"+roll);
+                lbPitch.setText("Pitch:"+pitch);
+                lbAUX1.setText("AUX1:"+rcArr[3]);
+                lbAUX2.setText("AUX2:"+rcArr[4]);
+
+                throttle.setValue(rcThrottle);
+                joyStick.setValue(roll,pitch);
+            }
+        },
+        Loop:function(){
+            Remote.Update();
+            Remote.Render();
+            requestAnimationFrame(Remote.Loop);
+        },
+        Draw:{
+            rect:function(x,y,w,h,color ){
+                Remote.ctx.fillStyle = color;
+                Remote.ctx.rect(x,y,w,h);
+            },
+            fillRect:function(x,y,w,h,color ){
+                Remote.ctx.fillStyle = color;
+                Remote.ctx.fillRect(x,y,w,h);
+            },
+            text:function(text, font, c, x, y){
+                Remote.ctx.font = font;
+                Remote.ctx.fillStyle = c;
+                Remote.ctx.fillText(text, x, y);
+            },
+            arc:function( x, y,r,c){
+                Remote.ctx.fillStyle = c;
+                Remote.ctx.beginPath();
+                Remote.ctx.arc(x , y, r, 0, Math.PI * 2, false);
+                Remote.ctx.closePath();
+                Remote.ctx.fill();
+            }
+        }
+    };
+
+    var Label = function (text,font,x,y,color)
+    {
+        this.text = text;
+        this.x = x;
+        this.y = y;
+        this.remove = false;
+        this.font = font;
+        this.color = color;
+
+        this.Update = function () { };
+        this.setText = function(txt){
+
+            this.text = txt;
+        };
+
+        this.Render = function () {
+            Remote.Draw.text(this.text,this.font, this.color, this.x, this.y);
+        };
+
+        Remote.entities.push(this);
+    };
+
+    var Button = function(x,y,w,h,color,label,tx,ty,tcolor)
+    {
+        this.X = x;
+        this.Y = y;
+        this.W = w;
+        this.H = h;
+
+        this.x = x;
+        this.y = y;
+        this.tx = tx;
+        this.ty = ty;
+        this.w = w;
+        this.h = h;
+        this.label = label;
+        this.remove = false;
+        this.color = color;
+        this.tcolor = tcolor;
+        this.hover = false;
+        this.identifier = -1;
+        this.Update = function () { };
+        this.Render = function () {
+//            if(this.hover)
+//            {
+//                Remote.Draw.fillRect(this.x, this.y,this.w,this.h,Color.white);
+//            }
+//            else
+//            {
+//                Remote.Draw.fillRect(this.x, this.y,this.w,this.h,Color.dark);
+//            }
+
+            Remote.Draw.text(this.label,font,this.tcolor,this.tx,this.ty);
+        };
+
+        this.ra = 1000 / this.H;
+
+        this.setLabel = function(label){
+            this.label = label;
+        }
+
+        var $this = this;
+        window.addEventListener("touchstart",function(event){
+
+                for(var i=0;i<event.targetTouches.length;i++)
+                {
+                    var p1 = event.targetTouches[i];
+                    if(p1.clientX > $this.x &&
+                            p1.clientY > $this.y &&
+                            p1.clientX < $this.x + $this.w  &&
+                            p1.clientY < $this.y + $this.h){
+                        if($this.funTouchStart) {
+                            $this.funTouchStart($this);
+                        }
+                        $this.identifier=p1.identifier;
+                        $this.hover = true;
+                    }
+                }
+        });
+
+        window.addEventListener("touchend",function(event) {
+
+
+            for(var i=0;i<event.changedTouches.length;i++)
+            {
+                var p1 = event.changedTouches[i];
+                if(p1.identifier==$this.identifier){
+
+                    if($this.funTouchend) {
+                        $this.funTouchend($this);
+                    }
+
+                    $this.hover = false;
+                }
+            }
+
+        });
+        this.funTouchStart = null;
+        this.touchstart = function(fun){
+            this.funTouchStart = fun;
+        }
+
+
+        this.funTouchend = null;
+
+        this.touchend = function(fun){
+            this.funTouchend = fun;
+        }
+
+        Remote.entities.push(this);
+    }
+
+    var ToggleButton = function(x,y,w,h,color,label,tx,ty,tcolor)
+    {
+        this.X = x;
+        this.Y = y;
+        this.W = w;
+        this.H = h;
+
+        this.x = x;
+        this.y = y;
+        this.tx = tx;
+        this.ty = ty;
+        this.w = w;
+        this.h = h;
+        this.label = label;
+        this.remove = false;
+        this.color = color;
+        this.tcolor = tcolor;
+        this.toggle = false;
+        this.Update = function () { };
+        this.Render = function () {
+            if(this.toggle)
+            {
+                Remote.Draw.fillRect(this.x, this.y,this.w,this.h,Color.red);
+            }
+            else
+            {
+                Remote.Draw.fillRect(this.x, this.y,this.w,this.h,Color.green);
+            }
+
+            Remote.Draw.text(this.label,font,this.tcolor,this.tx,this.ty);
+        };
+
+        this.ra = 1000 / this.H;
+
+        this.setLabel = function(label){
+           this.label = label;
+        }
+
+        this.setToggle = function()
+        {
+            this.toggle = !this.toggle;
+        }
+
+        this.getToggle = function(){
+            return this.toggle;
+        }
+
+        var $this = this;
+        window.addEventListener("touchend",function(event){
+            for(var i=0;i<event.changedTouches.length;i++)
+            {
+
+                var p1 = event.changedTouches[i];
+                if(p1.clientX > $this.x &&
+                        p1.clientY > $this.y &&
+                        p1.clientX < $this.x + $this.w  &&
+                        p1.clientY < $this.y + $this.h){
+                    $this.setToggle();
+                    if($this.funClick) {
+                        $this.funClick($this);
+                    }
+
+                }
+            }
+        });
+        this.funClick = null;
+
+        this.click = function(fun){
+            this.funClick = fun;
+        }
+
+        Remote.entities.push(this);
+    }
+
+    var Throttle = function(x,y,w,h,color)
+    {
+        this.X = x;
+        this.Y = y;
+        this.W = w;
+        this.H = h;
+
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.remove = false;
+        this.color = color;
+        this.Update = function () { };
+        this.Render = function () {
+
+            Remote.Draw.fillRect(this.x, this.y,this.w,this.h,this.color);
+        };
+
+        this.ra = 1000 / this.H;
+
+        this.setValue = function(rcThrottle){
+            this.h = (rcThrottle - 1000) / this.ra;
+            this.y = this.Y + this.H - this.h;
+        }
+
+        Remote.entities.push(this);
+    }
+
+    var JoyStick = function(x,y,color)
+    {
+        this.x = x;
+        this.y = y;
+        this.r = (Math.min(Remote.width,Remote.height)) / 2;
+        this.remove = false;
+        this.color = color;
+        this.value = [100,100];
+        this.Update = function () { };
+
+        this.Pad = {
+            X:this.x,
+            Y:this.y,
+            x:this.x,
+            y:this.y,
+            r:this.r / 4,
+            c:"#AAA",
+            setColor:function(c){
+                this.c = c;
+            },
+          Render : function () {
+            Remote.Draw.arc( this.x, this.y,this.r,this.c);
+          }
+        };
+
+        var range = this.r / 2 + this.Pad.r;
+        this.ra =  500 / range;
+
+        this.setValue = function(roll,pitch){
+            this.Pad.x = this.Pad.X +  (roll - 1500) / this.ra ;
+            this.Pad.y = this.Pad.Y -  (pitch - 1500) / this.ra;
+        };
+
+        this.Render = function () {
+
+            Remote.Draw.arc( this.x, this.y,this.r,this.color);
+            this.Pad.Render();
+        };
+
+        Remote.entities.push(this);
+    }
+
+    setTimeout(function(){
+        Remote.Init();
+    },1000);
+
+</script>
+</body>
+</html>
