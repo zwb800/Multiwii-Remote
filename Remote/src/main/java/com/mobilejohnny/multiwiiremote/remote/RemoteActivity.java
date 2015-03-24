@@ -2,6 +2,7 @@ package com.mobilejohnny.multiwiiremote.remote;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.hardware.Sensor;
@@ -207,6 +208,12 @@ public class RemoteActivity extends ActionBarActivity {
         if(id == R.id.action_connect)
         {
             connect();
+            return true;
+        }
+        else if(id==R.id.action_settings)
+        {
+            Intent intent = new Intent(this,SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
 
