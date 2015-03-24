@@ -28,7 +28,7 @@
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="app: com.mobilejohnny.multiwiiremote.remote" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="96e7a9de-55c8-415c-95dc-f1759b58bce8" name="Default" comment="">
+    <list default="true" id="96e7a9de-55c8-415c-95dc-f1759b58bce8" name="Default" comment="设置">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/appcompat_v7_21_0_3.xml" afterPath="$PROJECT_DIR$/.idea/libraries/appcompat_v7_21_0_3.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/support_annotations_21_0_3.xml" afterPath="$PROJECT_DIR$/.idea/libraries/support_annotations_21_0_3.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/support_v4_21_0_3.xml" afterPath="$PROJECT_DIR$/.idea/libraries/support_v4_21_0_3.xml" />
@@ -88,8 +88,8 @@
       <file leaf-file-name="SettingsActivity.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/SettingsActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.8062827" vertical-offset="3131" max-vertical-offset="5130">
-              <caret line="183" column="51" selection-start-line="183" selection-start-column="51" selection-end-line="183" selection-end-column="51" />
+            <state vertical-scroll-proportion="0.7068063" vertical-offset="3131" max-vertical-offset="5130">
+              <caret line="181" column="44" selection-start-line="181" selection-start-column="44" selection-end-line="181" selection-end-column="44" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#2797#2831#0" expanded="true" />
@@ -2049,7 +2049,7 @@
       <workItem from="1427108409992" duration="1269000" />
       <workItem from="1427172496639" duration="591000" />
       <workItem from="1427179807842" duration="48000" />
-      <workItem from="1427203393729" duration="5580000" />
+      <workItem from="1427203393729" duration="5682000" />
     </task>
     <task id="LOCAL-00001" summary="设置">
       <created>1427208991476</created>
@@ -2057,11 +2057,17 @@
       <option name="project" value="LOCAL" />
       <updated>1427208991476</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="设置">
+      <created>1427209002594</created>
+      <option name="number" value="00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1427209002594</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="12845000" />
+    <option name="totallyTimeSpent" value="12947000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
@@ -2346,10 +2352,18 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/.idea/libraries/appcompat_v7_21_0_3.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="369">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/SettingsActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.8062827" vertical-offset="3131" max-vertical-offset="5130">
-          <caret line="183" column="51" selection-start-line="183" selection-start-column="51" selection-end-line="183" selection-end-column="51" />
+        <state vertical-scroll-proportion="0.7068063" vertical-offset="3131" max-vertical-offset="5130">
+          <caret line="181" column="44" selection-start-line="181" selection-start-column="44" selection-end-line="181" selection-end-column="44" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#2797#2831#0" expanded="true" />
