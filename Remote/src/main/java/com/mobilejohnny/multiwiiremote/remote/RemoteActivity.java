@@ -2,6 +2,7 @@ package com.mobilejohnny.multiwiiremote.remote;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.hardware.Sensor;
@@ -136,6 +137,7 @@ public class RemoteActivity extends ActionBarActivity {
 
 
 
+
     private void updateUI() {
 
 //        txtThrottle.setText(rcThrottle+"");
@@ -183,8 +185,11 @@ public class RemoteActivity extends ActionBarActivity {
                             | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                             | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                             | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);}
+//                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+
+
+        }
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
     }
@@ -207,6 +212,12 @@ public class RemoteActivity extends ActionBarActivity {
         if(id == R.id.action_connect)
         {
             connect();
+            return true;
+        }
+        else  if(id == R.id.action_settings)
+        {
+            Intent intent =new Intent(this,SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
 

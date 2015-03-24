@@ -219,8 +219,11 @@ private int bytesRead = 0;
   {
     Log.i(TAG, "Bluetooth closing... ");
     try {
+        if(outStream!=null)
       outStream.close();
+        if(inStream!=null)
       inStream.close();
+        if(socket!=null)
       socket.close();
       Log.i(TAG, "BT closed");
     } 
