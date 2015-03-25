@@ -27,7 +27,7 @@ public class Bluetooth {
 	 * 
 	 */
     private Activity activity;
-private String address=null;
+private String device_name=null;
   private static final String TAG="tBlue";
   private BluetoothAdapter localAdapter=null;
   private BluetoothDevice remoteDevice=null;
@@ -55,10 +55,10 @@ private String address=null;
 //    }
   }
 
-  public Bluetooth(Activity activity, String address)
+  public Bluetooth(Activity activity, String device_name)
   {
       this.activity = activity;
-	this.address=address.toUpperCase();
+	this.device_name=device_name;
     localAdapter = BluetoothAdapter.getDefaultAdapter();
     if ((localAdapter!=null) && localAdapter.isEnabled()) {
       Log.i(TAG, "Bluetooth adapter found and enabled on phone. ");
@@ -69,7 +69,8 @@ private String address=null;
       Log.e(TAG, "Bluetooth adapter NOT FOUND or NOT ENABLED!");
       return;
     }
-//    connect();
+
+      findDevice();
   }
 
     public Set<BluetoothDevice> getBondedDevices()
@@ -78,52 +79,44 @@ private String address=null;
         return localAdapter.getBondedDevices();
     }
 
-  public void connect()
-  {
-    for (BluetoothDevice dp : localAdapter.getBondedDevices()) {
-      if (dp.getName().equals("BTCOM"))//floneId
-        this.address = dp.getAddress();
-    }
-    Log.i(TAG, "Bluetooth connecting to "+address+"...");
-    try {
-      remoteDevice = localAdapter.getRemoteDevice(address);
-    } 
-    catch (IllegalArgumentException e) {
-      Log.e(TAG, "Failed to get remote device with MAC address."
-        +"Wrong format? MAC address must be upper case. ", 
-      e);
-      return;
+    public void findDevice()
+    {
+        for (BluetoothDevice dp : localAdapter.getBondedDevices()) {
+            if (dp.getName().equals(device_name))
+                remoteDevice = dp;
+        }
+
+        Log.i(TAG, "Creating RFCOMM socket...");
+        try {
+            Method m = remoteDevice.getClass().getMethod
+                    ("createRfcommSocket", new Class[] { int.class});
+            socket = (BluetoothSocket) m.invoke(remoteDevice, 1);
+//        socket = remoteDevice.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
+            Log.i(TAG, "RFCOMM socket created.");
+        }
+        catch (NoSuchMethodException e) {
+            Log.i(TAG, "Could not invoke createRfcommSocket.");
+            e.printStackTrace();
+        }
+        catch (IllegalArgumentException e) {
+            Log.i(TAG, "Bad argument with createRfcommSocket.");
+            e.printStackTrace();
+        }
+        catch (IllegalAccessException e) {
+            Log.i(TAG, "Illegal access with createRfcommSocket.");
+            e.printStackTrace();
+        }
+        catch (InvocationTargetException e) {
+            Log.i(TAG, "Invocation target exception: createRfcommSocket.");
+            e.printStackTrace();
+        }
+
+        Log.i(TAG, "Got socket for device "+socket.getRemoteDevice());
+        localAdapter.cancelDiscovery();
     }
 
-    Log.i(TAG, "Creating RFCOMM socket..."); 
-    try {
-      Method m = remoteDevice.getClass().getMethod
-        ("createRfcommSocket", new Class[] { 
-        int.class
-      }
-      );
-      socket = (BluetoothSocket) m.invoke(remoteDevice, 1);
-//        socket = remoteDevice.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
-      Log.i(TAG, "RFCOMM socket created.");
-    } 
-    catch (NoSuchMethodException e) {
-      Log.i(TAG, "Could not invoke createRfcommSocket.");
-      e.printStackTrace();
-    } 
-    catch (IllegalArgumentException e) {
-      Log.i(TAG, "Bad argument with createRfcommSocket.");
-      e.printStackTrace();
-    } 
-    catch (IllegalAccessException e) {
-      Log.i(TAG, "Illegal access with createRfcommSocket.");
-      e.printStackTrace();
-    }
-    catch (InvocationTargetException e) {
-      Log.i(TAG, "Invocation target exception: createRfcommSocket.");
-      e.printStackTrace();
-    }
-      Log.i(TAG, "Got socket for device "+socket.getRemoteDevice());
-    localAdapter.cancelDiscovery(); 
+  public void connect()
+  {
 
     Log.i(TAG, "Connecting socket...");
     try {
@@ -159,12 +152,7 @@ private String address=null;
     //No tags here for performance
     //Log.i(TAG, "Sending \""+s+"\"... "); 
     byte[] outBuffer= s.getBytes(); 
-    try {
-      outStream.write(outBuffer);
-    } 
-    catch (IOException e) {
-      Log.e(TAG, "Write failed.", e);
-    }
+    write(outBuffer);
   }
 
   public void write(byte[] outBuffer) 

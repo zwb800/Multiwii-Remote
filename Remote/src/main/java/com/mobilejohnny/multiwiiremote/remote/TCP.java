@@ -1,5 +1,7 @@
 package com.mobilejohnny.multiwiiremote.remote;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ServerSocket;
@@ -28,6 +30,7 @@ public class TCP {
                     socket = new Socket(ip,port);
                     outputStream = socket.getOutputStream();
                 } catch (IOException e) {
+                    Log.e("TCP",e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -38,11 +41,10 @@ public class TCP {
     {
         boolean result = false;
         try {
-
             outputStream.write(data);
-            outputStream.flush();
             result = true;
         } catch (IOException e) {
+            Log.e("TCP",e.getMessage());
             e.printStackTrace();
         }
 

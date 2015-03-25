@@ -123,7 +123,7 @@ public class RemoteActivity extends ActionBarActivity {
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
         device_name =  preference.getString("device_name","");
         host  = preference.getString("host","");
-        port = Integer.parseInt( preference.getString("port","0"));
+        port = Integer.parseInt(preference.getString("port","0"));
 
         BTReceiver = new BlueToothReceiver(this);
 
@@ -135,7 +135,7 @@ public class RemoteActivity extends ActionBarActivity {
 
         arm(false);
 
-        tBlue = new Bluetooth(this);
+        tBlue = new Bluetooth(this,device_name);
         tcp = new TCP();
         udp = new UDP();
         connect();
@@ -514,7 +514,7 @@ public class RemoteActivity extends ActionBarActivity {
         //sendRequestMSP(requestMSP(MSP_ACC_CALIBRATION));
         try {
             connect_type = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("connection_type", "-1"));
-            String msg = "Connecting to ";
+            String msg = "";
             if(connect_type==CONNECT_BLUETOOTH)
             {
                 tBlue.connect();
@@ -531,10 +531,11 @@ public class RemoteActivity extends ActionBarActivity {
                 msg += "UDP "+host+":"+port+"";
             }
 
+            msg += " Connected";
             Toast.makeText(this,msg,Toast.LENGTH_SHORT).show();
         }
         catch (NullPointerException ex) {
-            Toast.makeText(this, "Warning: Flone not connected", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Warning: Bluetooth device not connected", Toast.LENGTH_SHORT).show();
         }
     }
 
