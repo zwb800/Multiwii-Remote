@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Set;
 import java.util.UUID;
 
 /*
@@ -35,11 +36,16 @@ private String address=null;
   public InputStream inStream=null;
  // private boolean failed=false;
 
+    public Bluetooth()
+    {
+        this(null);
+    }
+
   public Bluetooth(Activity activity)
   {
     this.activity = activity;
 	localAdapter = BluetoothAdapter.getDefaultAdapter(); 
-    if (!localAdapter.isEnabled())
+    if (!localAdapter.isEnabled() && activity !=null)
     {
       Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
       this.activity.startActivityForResult(enableBtIntent,0);
@@ -64,7 +70,13 @@ private String address=null;
       return;
     }
 //    connect();
-  } 
+  }
+
+    public Set<BluetoothDevice> getBondedDevices()
+    {
+
+        return localAdapter.getBondedDevices();
+    }
 
   public void connect()
   {

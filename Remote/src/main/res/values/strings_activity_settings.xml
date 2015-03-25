@@ -19,7 +19,7 @@
         <item>TCP</item>
         <item>UDP</item>
     </string-array>
-    <string-array name="pref_example_list_values">
+    <string-array name="pref_connect_list_values">
         <item>0</item>
         <item>1</item>
         <item>2</item>

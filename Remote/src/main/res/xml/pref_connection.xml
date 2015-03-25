@@ -1,0 +1,40 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceCategory
+        android:title="Connection Mode">
+
+    <com.mobilejohnny.multiwiiremote.remote.BluetoothDeviceListPreference
+        android:key="device_name"
+        android:title="Bluetooth Device"
+        />
+    <ListPreference
+        android:key="connection_type"
+        android:title="@string/pref_title_connection"
+        android:defaultValue="0"
+        android:entries="@array/pref_connect_list_titles"
+        android:entryValues="@array/pref_connect_list_values"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null" />
+
+    <EditTextPreference
+        android:key="host"
+        android:selectAllOnFocus="true"
+        android:title="@string/pref_title_host"
+        android:defaultValue="127.0.0.1"
+        android:inputType="textUri"
+        android:singleLine="true"
+        android:maxLines="1"
+        />
+
+    <EditTextPreference
+            android:key="port"
+            android:selectAllOnFocus="true"
+            android:title="@string/pref_title_port"
+            android:inputType="numberDecimal"
+            android:singleLine="true"
+            android:maxLines="1"
+            android:maxLength="6"
+            android:defaultValue="8080"
+            />
+
+</PreferenceCategory>
+</PreferenceScreen>

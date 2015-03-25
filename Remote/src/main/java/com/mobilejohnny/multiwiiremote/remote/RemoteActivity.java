@@ -4,11 +4,14 @@ import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorManager;
 import android.os.PowerManager;
+import android.preference.Preference;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -84,7 +87,8 @@ public class RemoteActivity extends ActionBarActivity {
     private TCP tcp;
     private UDP udp;
     private int port = 8080;
-    private String ip = "192.168.0.142";
+    private String device_name = null;
+    private String host = "192.168.0.142";
     private int connect_type = CONNECT_UDP;
     private static final int CONNECT_BLUETOOTH = 0;
     private static final int CONNECT_TCP = 1;
@@ -116,8 +120,10 @@ public class RemoteActivity extends ActionBarActivity {
 //                }
 //            }
 //        });
-
-        String addressid = "";
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+        device_name =  preference.getString("device_name","");
+        host  = preference.getString("host","");
+        port = Integer.parseInt( preference.getString("port","0"));
 
         BTReceiver = new BlueToothReceiver(this);
 
@@ -129,14 +135,11 @@ public class RemoteActivity extends ActionBarActivity {
 
         arm(false);
 
-        tBlue = new Bluetooth(null,addressid);
+        tBlue = new Bluetooth(this);
         tcp = new TCP();
         udp = new UDP();
         connect();
     }
-
-
-
 
     private void updateUI() {
 
@@ -185,10 +188,8 @@ public class RemoteActivity extends ActionBarActivity {
                             | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                             | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                             | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-//                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN
                             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-
-
         }
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
@@ -512,18 +513,25 @@ public class RemoteActivity extends ActionBarActivity {
         //Toast.makeText(getApplicationContext(), "calibrating flone", Toast.LENGTH_SHORT).show();
         //sendRequestMSP(requestMSP(MSP_ACC_CALIBRATION));
         try {
+            connect_type = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("connection_type", "-1"));
+            String msg = "Connecting to ";
             if(connect_type==CONNECT_BLUETOOTH)
             {
                 tBlue.connect();
+                msg += device_name;
             }
             else if(connect_type==CONNECT_TCP)
             {
-                tcp.connect(ip,port);
+                tcp.connect(host,port);
+                msg += "TCP "+host+":"+port;
             }
             else if(connect_type==CONNECT_UDP)
             {
-                udp.connect(ip,port);
+                udp.connect(host,port);
+                msg += "UDP "+host+":"+port+"";
             }
+
+            Toast.makeText(this,msg,Toast.LENGTH_SHORT).show();
         }
         catch (NullPointerException ex) {
             Toast.makeText(this, "Warning: Flone not connected", Toast.LENGTH_SHORT).show();
