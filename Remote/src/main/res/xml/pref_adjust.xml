@@ -1,0 +1,37 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceCategory
+        android:title="Adjust Middle">
+
+    <EditTextPreference
+            android:icon="@android:drawable/ic_menu_directions"
+            android:key="middle_pitch"
+            android:selectAllOnFocus="true"
+            android:title="Pitch"
+            android:inputType="numberDecimal"
+            android:singleLine="true"
+            android:maxLines="1"
+            android:maxLength="6"
+            android:defaultValue="1500"
+            />
+
+    <EditTextPreference
+            android:icon="@android:drawable/ic_menu_directions"
+            android:key="middle_roll"
+            android:selectAllOnFocus="true"
+            android:title="Roll"
+            android:inputType="numberDecimal"
+            android:singleLine="true"
+            android:maxLines="1"
+            android:maxLength="4"
+            android:numeric="integer"
+            android:defaultValue="1500"
+            />
+
+    <Preference
+            android:icon="@android:drawable/ic_menu_send"
+            android:title="Start">
+        <intent
+                android:action="com.mobilejohnny.multiwiiremote.remote.action.REMOTE_WEB"></intent>
+    </Preference>
+</PreferenceCategory>
+</PreferenceScreen>

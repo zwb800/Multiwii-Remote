@@ -42,12 +42,5 @@
             android:defaultValue="8080"
             />
 
-    <Preference
-            android:icon="@android:drawable/ic_menu_send"
-            android:title="Start">
-        <intent
-                android:targetPackage="com.mobilejohnny.multiwiiremote.remote"
-                android:targetClass="com.mobilejohnny.multiwiiremote.remote.RemoteWebActivity"></intent>
-    </Preference>
 </PreferenceCategory>
 </PreferenceScreen>

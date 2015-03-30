@@ -34,8 +34,6 @@ public class SettingsActivity extends PreferenceActivity {
                 .beginTransaction()
                 .replace(android.R.id.content, new GeneralPreferenceFragment())
                 .commit();
-
-
     }
 
     /**
@@ -94,16 +92,21 @@ public class SettingsActivity extends PreferenceActivity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_connection);
+            addPreferencesFromResource(R.xml.pref_adjust);
 
-//            final Preference prefDeviceName = findPreference("device_name");
             final Preference prefConnection =  findPreference("connection_type");
             final Preference prefHost =  findPreference("host");
             final Preference prefPort =  findPreference("port");
             final Preference prefDeviceName =  findPreference("device_name");
+            final Preference prefMiddlePitch =  findPreference("middle_pitch");
+            final Preference prefMiddleRoll =  findPreference("middle_roll");
+
 
             bindPreferenceSummaryToValue(prefDeviceName);
             bindPreferenceSummaryToValue(prefHost);
             bindPreferenceSummaryToValue(prefPort);
+            bindPreferenceSummaryToValue(prefMiddlePitch);
+            bindPreferenceSummaryToValue(prefMiddleRoll);
 
             Preference.OnPreferenceChangeListener onPreferenceChangeListener = new Preference.OnPreferenceChangeListener() {
                 @Override
@@ -125,5 +128,7 @@ public class SettingsActivity extends PreferenceActivity {
                     .getString(prefConnection.getKey(), ""));
         }
     }
+
+
 
 }
