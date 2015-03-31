@@ -3,6 +3,7 @@ package com.mobilejohnny.multiwiiremote.remote;
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Build;
 import android.preference.ListPreference;
 import android.util.AttributeSet;
@@ -46,6 +47,4 @@ public class BluetoothDeviceListPreference extends ListPreference {
         setEntries(arrEntries);
         setEntryValues(arrEntries);
     }
-
-
 }

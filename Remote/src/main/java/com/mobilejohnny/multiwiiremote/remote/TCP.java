@@ -4,8 +4,7 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 
 /**
  * Created by admin2 on 2015/3/20.
@@ -20,21 +19,22 @@ public class TCP {
     public TCP()  {
     }
 
-    public void connect(final String ip, final int port)
+    public boolean connect(final String ip, final int port)
     {
-        new Thread(){
-            @Override
-            public void run() {
-                super.run();
-                try {
-                    socket = new Socket(ip,port);
-                    outputStream = socket.getOutputStream();
-                } catch (IOException e) {
-                    Log.e("TCP",e.getMessage());
-                    e.printStackTrace();
-                }
+        boolean result = false;
+            try {
+                socket = new Socket();
+                InetSocketAddress address = new InetSocketAddress(ip,port);
+                socket.connect(address, 2000);
+                outputStream = socket.getOutputStream();
+                result = true;
+            } catch (IOException e) {
+                Log.e("TCP",e.getMessage());
+                e.printStackTrace();
             }
-        }.start();
+
+        return result;
+
     }
 
     public boolean send(byte[] data)

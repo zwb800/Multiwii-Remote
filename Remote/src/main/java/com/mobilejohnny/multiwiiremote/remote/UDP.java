@@ -32,7 +32,7 @@ public class UDP {
         return outputStream;
     }
 
-    public void connect(String ip,int port)
+    public boolean connect(String ip,int port)
     {
 
         try {
@@ -44,6 +44,8 @@ public class UDP {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
+
+        return true;
     }
 
     public boolean send(byte[] data)
@@ -54,6 +56,7 @@ public class UDP {
             @Override
             public void run() {
                 try {
+                    if(datagramSocket!=null)
                     datagramSocket.send(datagramPacket);
 
                 } catch (IOException e) {

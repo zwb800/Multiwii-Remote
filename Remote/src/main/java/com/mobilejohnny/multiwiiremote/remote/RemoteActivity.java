@@ -9,17 +9,20 @@ import android.content.pm.ActivityInfo;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorManager;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.preference.Preference;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+import org.apache.http.auth.NTUserPrincipal;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -54,10 +57,12 @@ public class RemoteActivity extends ActionBarActivity {
     private static final byte[] MSP_HEADER_BYTE = MSP_HEADER.getBytes();
     private static final int headerLength = MSP_HEADER_BYTE.length;
 
-    static final int minRC = 1000, maxRC = 2000, medRC = 1500;
+    static final int minRC = 1000, maxRC = 2000;
+    //, medRC = 1500;
+    static int medRollRC = 1500,medPitchRC = 1500,medYawRC = 1500;
 
     static int servo[] = new int[8],
-            rcThrottle = minRC, rcRoll = medRC, rcPitch = medRC, rcYaw =medRC,
+            rcThrottle = minRC, rcRoll = medRollRC, rcPitch = medPitchRC, rcYaw =medYawRC,
             rcAUX1=minRC, rcAUX2=minRC, rcAUX3=minRC, rcAUX4=minRC;
 
     private static final int
@@ -98,6 +103,9 @@ public class RemoteActivity extends ActionBarActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         decorView = getWindow().getDecorView();
+
+        if(getRequestedOrientation()!=ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+            return;
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
 //        txtThrottle = (TextView)findViewById(R.id.txtThrottle);
 //        txtRoll = (TextView)findViewById(R.id.txtRoll);
@@ -121,9 +129,12 @@ public class RemoteActivity extends ActionBarActivity {
 //            }
 //        });
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+        connect_type = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("connection_type", "-1"));
         device_name =  preference.getString("device_name","");
         host  = preference.getString("host","");
-        port = Integer.parseInt(preference.getString("port","0"));
+        port = Integer.parseInt(preference.getString("port", "0"));
+        medPitchRC = Integer.parseInt(preference.getString("middle_pitch", "1500"));
+        medRollRC = Integer.parseInt(preference.getString("middle_roll", "1500"));
 
         BTReceiver = new BlueToothReceiver(this);
 
@@ -139,6 +150,7 @@ public class RemoteActivity extends ActionBarActivity {
         tcp = new TCP();
         udp = new UDP();
         connect();
+        Log.d("RemoteActivity","onCreate");
     }
 
     private void updateUI() {
@@ -173,7 +185,7 @@ public class RemoteActivity extends ActionBarActivity {
             tcp.close();
         if(udp!=null)
             udp.close();
-
+        if(BTReceiver!= null)
         unregisterReceiver(BTReceiver);
 
         super.onDestroy();
@@ -210,12 +222,8 @@ public class RemoteActivity extends ActionBarActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if(id == R.id.action_connect)
-        {
-            connect();
-            return true;
-        }
-        else  if(id == R.id.action_settings)
+
+        if(id == R.id.action_settings)
         {
             Intent intent =new Intent(this,SettingsActivity.class);
             startActivity(intent);
@@ -376,8 +384,8 @@ public class RemoteActivity extends ActionBarActivity {
         }
         else
         {
-            rcRoll = medRC;
-            rcPitch = medRC;
+            rcRoll = medRollRC;
+            rcPitch = medPitchRC;
         }
 
         rcThrottle = constrain(rcThrottle, minRC, maxRC);
@@ -385,7 +393,7 @@ public class RemoteActivity extends ActionBarActivity {
         rcPitch = constrain(rcPitch, minRC, maxRC);
         //rcYaw= constrain(rcYaw, minRC, maxRC);
         //rcYaw=rotationZ*100;
-        rcYaw=medRC;
+        rcYaw=medYawRC;
     }
 
     protected int constrain(int val,int min,int max)
@@ -508,35 +516,45 @@ public class RemoteActivity extends ActionBarActivity {
         }
     }
 
+    String msg = "";
     public void connect() {
 //        Toast.makeText(this,"connecting flone",Toast.LENGTH_SHORT).show();
         //Toast.makeText(getApplicationContext(), "calibrating flone", Toast.LENGTH_SHORT).show();
         //sendRequestMSP(requestMSP(MSP_ACC_CALIBRATION));
-        try {
-            connect_type = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("connection_type", "-1"));
-            String msg = "";
-            if(connect_type==CONNECT_BLUETOOTH)
-            {
-                tBlue.connect();
-                msg += device_name;
-            }
-            else if(connect_type==CONNECT_TCP)
-            {
-                tcp.connect(host,port);
-                msg += "TCP "+host+":"+port;
-            }
-            else if(connect_type==CONNECT_UDP)
-            {
-                udp.connect(host,port);
-                msg += "UDP "+host+":"+port+"";
-            }
+        final Handler handler = new Handler();
+            new Thread(){
+                @Override
+                public void run() {
+                    boolean result = false;
+                    try {
+                        if (connect_type == CONNECT_BLUETOOTH) {
+                            result = tBlue.connect();
+                            msg = device_name;
+                        } else if (connect_type == CONNECT_TCP) {
+                            result = tcp.connect(host, port);
+                            msg = "TCP " + host + ":" + port;
+                        } else if (connect_type == CONNECT_UDP) {
+                            result = udp.connect(host, port);
+                            msg = "UDP " + host + ":" + port + "";
+                        }
+                        if(result)
+                            msg += " Connected";
+                        else
+                            msg+= " Connect Failed";
+                    }
+                    catch(Exception e)
+                    {
+                        Log.e("MWC Remote","Connect Error",e);
+                    }
 
-            msg += " Connected";
-            Toast.makeText(this,msg,Toast.LENGTH_SHORT).show();
-        }
-        catch (NullPointerException ex) {
-            Toast.makeText(this, "Warning: Bluetooth device not connected", Toast.LENGTH_SHORT).show();
-        }
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(RemoteActivity.this, msg, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }.start();
     }
 
     public void send(byte[] data)

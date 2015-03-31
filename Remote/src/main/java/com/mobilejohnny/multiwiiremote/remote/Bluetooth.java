@@ -31,46 +31,21 @@ private String device_name=null;
   private static final String TAG="tBlue";
   private BluetoothAdapter localAdapter=null;
   private BluetoothDevice remoteDevice=null;
-  public BluetoothSocket socket=null;
-  public OutputStream outStream = null;
-  public InputStream inStream=null;
+  private BluetoothSocket socket=null;
+    private OutputStream outStream = null;
+    private InputStream inStream=null;
  // private boolean failed=false;
 
     public Bluetooth()
     {
-        this(null);
+        this(null,null);
     }
-
-  public Bluetooth(Activity activity)
-  {
-    this.activity = activity;
-	localAdapter = BluetoothAdapter.getDefaultAdapter(); 
-    if (!localAdapter.isEnabled() && activity !=null)
-    {
-      Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-      this.activity.startActivityForResult(enableBtIntent,0);
-    }
-//    else {
-//      connect();
-//    }
-  }
 
   public Bluetooth(Activity activity, String device_name)
   {
       this.activity = activity;
-	this.device_name=device_name;
-    localAdapter = BluetoothAdapter.getDefaultAdapter();
-    if ((localAdapter!=null) && localAdapter.isEnabled()) {
-      Log.i(TAG, "Bluetooth adapter found and enabled on phone. ");
-    } 
-    else {
-        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        this.activity.startActivityForResult(enableBtIntent,0);
-      Log.e(TAG, "Bluetooth adapter NOT FOUND or NOT ENABLED!");
-      return;
-    }
-
-      findDevice();
+      this.device_name=device_name;
+      localAdapter = BluetoothAdapter.getDefaultAdapter();
   }
 
     public Set<BluetoothDevice> getBondedDevices()
@@ -81,17 +56,31 @@ private String device_name=null;
 
     public void findDevice()
     {
+        localAdapter = BluetoothAdapter.getDefaultAdapter();
+        if ((localAdapter!=null) && localAdapter.isEnabled()) {
+            Log.i(TAG, "Bluetooth adapter found and enabled on phone. ");
+        }
+        else {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            this.activity.startActivityForResult(enableBtIntent,0);
+            Log.e(TAG, "Bluetooth adapter NOT FOUND or NOT ENABLED!");
+            return;
+        }
+
         for (BluetoothDevice dp : localAdapter.getBondedDevices()) {
             if (dp.getName().equals(device_name))
                 remoteDevice = dp;
         }
+    }
 
+    private void createSocket()
+    {
         Log.i(TAG, "Creating RFCOMM socket...");
         try {
             Method m = remoteDevice.getClass().getMethod
                     ("createRfcommSocket", new Class[] { int.class});
-            socket = (BluetoothSocket) m.invoke(remoteDevice, 1);
-//        socket = remoteDevice.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
+//            socket = (BluetoothSocket) m.invoke(remoteDevice, 1);
+        socket = remoteDevice.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
             Log.i(TAG, "RFCOMM socket created.");
         }
         catch (NoSuchMethodException e) {
@@ -102,12 +91,15 @@ private String device_name=null;
             Log.i(TAG, "Bad argument with createRfcommSocket.");
             e.printStackTrace();
         }
-        catch (IllegalAccessException e) {
-            Log.i(TAG, "Illegal access with createRfcommSocket.");
-            e.printStackTrace();
-        }
-        catch (InvocationTargetException e) {
-            Log.i(TAG, "Invocation target exception: createRfcommSocket.");
+//        catch (IllegalAccessException e) {
+//            Log.i(TAG, "Illegal access with createRfcommSocket.");
+//            e.printStackTrace();
+//        }
+//        catch (InvocationTargetException e) {
+//            Log.i(TAG, "Invocation target exception: createRfcommSocket.");
+//            e.printStackTrace();
+//        }
+        catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -115,12 +107,14 @@ private String device_name=null;
         localAdapter.cancelDiscovery();
     }
 
-  public void connect()
+  public boolean connect()
   {
-
+      findDevice();
+      createSocket();
+      boolean result = false;
     Log.i(TAG, "Connecting socket...");
     try {
-      socket.connect(); 
+      socket.connect();
       Log.i(TAG, "Socket connected.");
     }
     catch (IOException e) {
@@ -128,40 +122,37 @@ private String device_name=null;
         Log.e(TAG, "Failed to connect socket. ", e);
         socket.close();
         Log.e(TAG, "Socket closed because of an error. ", e);
-      } 
+      }
       catch (IOException eb) {
         Log.e(TAG, "Also failed to close socket. ", eb);
       }
-      return;
+      return result;
     }
 
     try {
-      outStream = socket.getOutputStream(); 
+      outStream = socket.getOutputStream();
       Log.i(TAG, "Output stream open.");
       inStream = socket.getInputStream();
       Log.i(TAG, "Input stream open.");
-    } 
-    catch (IOException e) {
-      Log.e(TAG, "Failed to create output stream.", e);  
+        result = true;
     }
-    return;
+    catch (IOException e) {
+      Log.e(TAG, "Failed to create output stream.", e);
+    }
+    return result;
   }
 
-  public void write(String s) 
-  {
-    //No tags here for performance
-    //Log.i(TAG, "Sending \""+s+"\"... "); 
-    byte[] outBuffer= s.getBytes(); 
-    write(outBuffer);
-  }
 
   public void write(byte[] outBuffer) 
   {
     //No tags here for performance
     //Log.i(TAG, "Sending "); 
     try {
-      outStream.write(outBuffer);
-    } 
+        if(outStream!=null)
+        {
+            outStream.write(outBuffer);
+        }
+    }
     catch (IOException e) {
       Log.e(TAG, "Write failed.", e);
     }

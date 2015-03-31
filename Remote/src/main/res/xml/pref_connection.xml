@@ -35,7 +35,7 @@
             android:key="port"
             android:selectAllOnFocus="true"
             android:title="@string/pref_title_port"
-            android:inputType="numberDecimal"
+            android:inputType="number"
             android:singleLine="true"
             android:maxLines="1"
             android:maxLength="6"

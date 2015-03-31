@@ -28,7 +28,7 @@ public class BlueToothReceiver extends BroadcastReceiver {
             Log.i("BT",action);
             if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
                 //Do something if connected
-                Toast.makeText(ctx, "flone connected", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(ctx, "flone connected", Toast.LENGTH_SHORT).show();
                 // floneConnected = true;
             }
             else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
