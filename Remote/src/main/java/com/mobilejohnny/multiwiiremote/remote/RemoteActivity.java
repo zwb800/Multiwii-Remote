@@ -28,7 +28,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 
-public class RemoteActivity extends ActionBarActivity {
+public abstract class RemoteActivity extends ActionBarActivity {
 
     // Sensor objects
     static SensorManager mSensorManager;
@@ -69,7 +69,7 @@ public class RemoteActivity extends ActionBarActivity {
 
             MSP_SET_RAW_RC           =200;
 
-    private long time;
+
 
     private android.hardware.SensorEventListener sensorEventListener;
     private long lastSend;
@@ -88,7 +88,7 @@ public class RemoteActivity extends ActionBarActivity {
     protected int fps;
     private boolean unlock;
     private BroadcastReceiver BTReceiver;
-    private View decorView;
+    protected View decorView;
     private TCP tcp;
     private UDP udp;
     private int port = 8080;
@@ -100,34 +100,18 @@ public class RemoteActivity extends ActionBarActivity {
     private static final int CONNECT_UDP = 2;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
+
         decorView = getWindow().getDecorView();
+        decorView.setKeepScreenOn(true);
 
         if(getRequestedOrientation()!=ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
             return;
+
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-//        txtThrottle = (TextView)findViewById(R.id.txtThrottle);
-//        txtRoll = (TextView)findViewById(R.id.txtRoll);
-//        txtPitch = (TextView)findViewById(R.id.txtPitch);
-//        txtAUX1 = (TextView)findViewById(R.id.txtAUX1);
-//        txtFPS = (TextView)findViewById(R.id.txtFPS);
-//
-//        switchArm = (Switch)findViewById(R.id.switchArm);
-//        switchArm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-//            @Override
-//            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-//                if(b)
-//                {
-//                    rcAUX1 = 2000;
-//                    rcThrottle = 1000;
-//                }
-//                else
-//                {
-//                    rcAUX1 = 1000;
-//                }
-//            }
-//        });
+
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
         connect_type = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("connection_type", "-1"));
         device_name =  preference.getString("device_name","");
@@ -153,23 +137,7 @@ public class RemoteActivity extends ActionBarActivity {
         Log.d("RemoteActivity","onCreate");
     }
 
-    private void updateUI() {
-
-//        txtThrottle.setText(rcThrottle+"");
-//        txtRoll.setText(rcRoll+"");
-//        txtPitch.setText(rcPitch+"");
-//        txtAUX1.setText(rcAUX1+"");
-
-
-
-        long currentTime = System.currentTimeMillis();
-        long dur = currentTime - time;
-
-        fps = (int) (1000.0 / (float)dur);
-//        txtFPS.setText(fps+"");
-
-        time = currentTime;
-    }
+    protected abstract void updateUI() ;
 
 
     @Override

@@ -16,6 +16,11 @@ public class JoystickView extends View {
 
     private Paint mPaint;
     private RectF padRectF;
+    private RectF padRectB;
+    private int padWidth;
+    private int padHeight;
+    private float a;
+    private float b;
 
     public JoystickView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -32,38 +37,53 @@ public class JoystickView extends View {
     }
 
     private void initPad() {
-        int width = getWidth() / 4;
-        int height = getHeight()  / 4;
+        padWidth = getWidth() / 4;
+        padHeight = getHeight()  / 4;
 
-        int left = (getWidth() - width)/ 2;
-        int top = (getHeight() - height)/ 2;
+        int left = (getWidth() - padWidth)/ 2;
+        int top = (getHeight() - padHeight)/ 2;
 
-        int right = left+ width;
-        int bottom = top+ height;
+        int right = left+ padWidth;
+        int bottom = top+ padHeight;
+
+        a = 1000 / (1080.0f - padWidth);
+        b = 1000 / (1080.0f - padHeight);
+
+        padRectB =  new RectF(0,0,getWidth(),getHeight());
+
         padRectF =  new RectF(left,top,right,bottom);
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//
+//
+//        if(event.getAction()==MotionEvent.ACTION_MOVE)
+//        {
+//            padRectF.left = event.getX();
+//            padRectF.top = event.getY();
+//            padRectF.set(padRectF.left,padRectF.top,padRectF.right,padRectF.bottom);
+//            invalidate();
+//            return true;
+//        }
+//
+//        return super.onTouchEvent(event);
+//    }
 
-
-        if(event.getAction()==MotionEvent.ACTION_MOVE)
-        {
-            padRectF.left = event.getX();
-            padRectF.top = event.getY();
-            padRectF.set(padRectF.left,padRectF.top,padRectF.right,padRectF.bottom);
-            invalidate();
-            return true;
-        }
-
-        return super.onTouchEvent(event);
+    public void setPadPosition(float x,float y)
+    {
+        x = (x - 1000) / a;
+        y = (2000 - y) / b;
+        padRectF.set(x,y,x+padWidth,y+ padHeight);
+        invalidate();
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        int width =  Math.min(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec));
 
-        setMeasuredDimension(Math.max(widthMeasureSpec,300), Math.max(widthMeasureSpec,300));
+        setMeasuredDimension(Math.max(width, 300), Math.max(width, 300));
     }
 
 
@@ -80,7 +100,7 @@ public class JoystickView extends View {
 //        canvas.drawRect(0,0,getWidth(),getHeight(),mPaint);
         mPaint.setColor(Color.DKGRAY);
 
-        canvas.drawArc(new RectF(0,0,getWidth(),getHeight()),0,360,false,mPaint);
+        canvas.drawArc(padRectB,0,360,false,mPaint);
 
         mPaint.setColor(Color.GRAY);
 

@@ -31,7 +31,7 @@
             android:icon="@android:drawable/ic_menu_send"
             android:title="Start">
         <intent
-                android:action="com.mobilejohnny.multiwiiremote.remote.action.REMOTE_WEB"></intent>
+                android:action="com.mobilejohnny.multiwiiremote.remote.action.REMOTE_NATIVE"></intent>
     </Preference>
 </PreferenceCategory>
 </PreferenceScreen>

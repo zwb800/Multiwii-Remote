@@ -14,7 +14,7 @@ public class RemoteWebActivity extends RemoteActivity {
     private ProgressBar progressBar;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.web);
@@ -43,6 +43,11 @@ public class RemoteWebActivity extends RemoteActivity {
                 webView.setVisibility(View.VISIBLE);
             }
         },1000);
+
+    }
+
+    @Override
+    protected void updateUI() {
 
     }
 
