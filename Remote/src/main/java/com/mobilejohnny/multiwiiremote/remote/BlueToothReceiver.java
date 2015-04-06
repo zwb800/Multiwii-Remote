@@ -33,7 +33,7 @@ public class BlueToothReceiver extends BroadcastReceiver {
             }
             else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
                 //Do something if disconnected
-                Toast.makeText(ctx, "flone disconnected", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ctx, "Bluetooth disconnected", Toast.LENGTH_SHORT).show();
                 //floneConnected = false;
 //                try {
 //                    tBlue.close();
