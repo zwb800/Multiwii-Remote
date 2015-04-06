@@ -5,7 +5,6 @@ import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
-import com.mobilejohnny.multiwiiremote.remote.util.SystemUiHider;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -28,6 +27,7 @@ public class RemoteNativeActivity extends RemoteActivity {
     private int halfWidth;
     private float mult;
     private JoystickView joyStick;
+    private ProgressBarView progressBarThrottle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +45,7 @@ public class RemoteNativeActivity extends RemoteActivity {
         txtAUX1 = (TextView)findViewById(R.id.txtAUX1);
         txtFPS = (TextView)findViewById(R.id.txtFPS);
         joyStick = (JoystickView)findViewById(R.id.joyStick);
+        progressBarThrottle = (ProgressBarView)findViewById(R.id.progressBarThrottle);
 
         switchArm = (Switch)findViewById(R.id.switchArm);
         switchArm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -84,16 +85,19 @@ public class RemoteNativeActivity extends RemoteActivity {
 
                 if(action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN)
                 {
-                    float x = 0;
+                    float x = 0,y=0;
                     if(action == MotionEvent.ACTION_DOWN) {
                         x = motionEvent.getX();
+                        y = motionEvent.getY();
                     }
                     else if(action == MotionEvent.ACTION_POINTER_DOWN)
                     {
-                        x = motionEvent.getX(motionEvent.getPointerId(index));
+                        int id = motionEvent.getPointerId(index);
+                        x = motionEvent.getX(id);
+                        y = motionEvent.getY(id);
                     }
                     if (x < halfWidth) {
-                        lastY = motionEvent.getY();
+                        lastY = y;
                     } else {
                         unLock();
                     }
@@ -104,22 +108,25 @@ public class RemoteNativeActivity extends RemoteActivity {
                         if(motionEvent.getX(i) < halfWidth )
                         {
                             float y = motionEvent.getY(i);
-                            rcThrottle += Math.round((lastY - y) * mult);
+                            rcThrottle += (int)((lastY - y) * mult);
                             rcThrottle = constrain(rcThrottle,1000,2000);
                             lastY = y;
+                            break;
                         }
                     }
                 }
                 else if(action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP)
                 {
-                    float x = 0;
+                    float x = 0,y=0;
                     if(action == MotionEvent.ACTION_UP) {
                         x = motionEvent.getX();
+                        y = motionEvent.getY();
                     }
-                    else
-                    if(action == MotionEvent.ACTION_POINTER_UP)
+                    else if(action == MotionEvent.ACTION_POINTER_UP)
                     {
-                        x = motionEvent.getX(motionEvent.getPointerId(index));
+                        int id = motionEvent.getPointerId(index);
+                        x = motionEvent.getX(id);
+                        y = motionEvent.getY(id);
                     }
 
                     if (x < halfWidth) {
@@ -144,7 +151,8 @@ public class RemoteNativeActivity extends RemoteActivity {
         txtPitch.setText(rcPitch+"");
         txtYaw.setText(rcYaw+"");
         txtAUX1.setText(rcAUX1+"");
-        joyStick.setPadPosition(rcRoll, rcPitch);
+        joyStick.setPadPosition(rcRoll - 1000,2000 - rcPitch);
+        progressBarThrottle.setValue((rcThrottle - 1000));
 
         long currentTime = System.currentTimeMillis();
         long dur = currentTime - time;

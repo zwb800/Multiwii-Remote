@@ -31,9 +31,7 @@ public class JoystickView extends View {
     private void init()
     {
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-
         mPaint.setTextSize(64);
-
     }
 
     private void initPad() {
@@ -46,8 +44,8 @@ public class JoystickView extends View {
         int right = left+ padWidth;
         int bottom = top+ padHeight;
 
-        a = 1000 / (1080.0f - padWidth);
-        b = 1000 / (1080.0f - padHeight);
+        a = 1000 / (float)(getWidth() - padWidth);
+        b = 1000 / (float)(getHeight() - padHeight);
 
         padRectB =  new RectF(0,0,getWidth(),getHeight());
 
@@ -72,10 +70,10 @@ public class JoystickView extends View {
 
     public void setPadPosition(float x,float y)
     {
-        x = (x - 1000) / a;
-        y = (2000 - y) / b;
+        x = x / a;
+        y = y / b;
         padRectF.set(x,y,x+padWidth,y+ padHeight);
-        invalidate();
+        postInvalidate();
     }
 
     @Override

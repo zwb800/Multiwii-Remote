@@ -1,5 +1,6 @@
 package com.mobilejohnny.multiwiiremote.remote;
 
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -17,6 +18,8 @@ public class RemoteWebActivity extends RemoteActivity {
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+        if(getRequestedOrientation()!= ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+            return;
         setContentView(R.layout.web);
         progressBar =(ProgressBar) findViewById(R.id.progressBar);
         webView = (WebView)findViewById(R.id.webView);
