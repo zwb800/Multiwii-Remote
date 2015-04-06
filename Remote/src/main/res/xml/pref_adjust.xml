@@ -29,15 +29,15 @@
 
     <Preference
             android:icon="@android:drawable/ic_menu_send"
-            android:title="Start Native">
+            android:title="Start">
         <intent
                 android:action="com.mobilejohnny.multiwiiremote.remote.action.REMOTE_NATIVE"></intent>
     </Preference>
-    <Preference
-            android:icon="@android:drawable/ic_menu_send"
-            android:title="Start Web">
-        <intent
-                android:action="com.mobilejohnny.multiwiiremote.remote.action.REMOTE_WEB"></intent>
-    </Preference>
+    <!--<Preference-->
+            <!--android:icon="@android:drawable/ic_menu_send"-->
+            <!--android:title="Start Web">-->
+        <!--<intent-->
+                <!--android:action="com.mobilejohnny.multiwiiremote.remote.action.REMOTE_WEB"></intent>-->
+    <!--</Preference>-->
 </PreferenceCategory>
 </PreferenceScreen>
