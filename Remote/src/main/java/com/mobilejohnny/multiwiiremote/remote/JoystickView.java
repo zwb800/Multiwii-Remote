@@ -32,6 +32,7 @@ public class JoystickView extends View {
     {
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setTextSize(64);
+        initPad();
     }
 
     private void initPad() {
