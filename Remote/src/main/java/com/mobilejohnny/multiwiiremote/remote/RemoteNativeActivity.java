@@ -26,6 +26,7 @@ public class RemoteNativeActivity extends RemoteActivity {
     private Switch switchArm;
     private int halfWidth;
     private float mult;
+    private float scaleYaw;
     private JoystickView joyStick;
     private ProgressBarView progressBarThrottle;
 
@@ -69,17 +70,23 @@ public class RemoteNativeActivity extends RemoteActivity {
             @Override
             public void run() {
                 halfWidth = decorView.getWidth() / 2;
-                mult = 540 /(float) decorView.getHeight();
+                mult = decorView.getHeight() / 540f;
+                scaleYaw = halfWidth / 960f;
+
             }
         });
 
         decorView.setOnTouchListener(new View.OnTouchListener() {
             public float lastY;
 
+            float middleX = 0;
+
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 int action = motionEvent.getAction() & MotionEvent.ACTION_MASK;
                 int index = (motionEvent.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK )>> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
+
+
 //               if(action!=MotionEvent.ACTION_MOVE)
 //                Log.i("RemoteNative",action+" "+index+" "+motionEvent.getPointerCount());
 
@@ -100,6 +107,8 @@ public class RemoteNativeActivity extends RemoteActivity {
                         lastY = y;
                     } else {
                         unLock();
+                        middleX = x;
+
                     }
                 }
                 else if (action == MotionEvent.ACTION_MOVE ) {
@@ -108,10 +117,34 @@ public class RemoteNativeActivity extends RemoteActivity {
                         if(motionEvent.getX(i) < halfWidth )
                         {
                             float y = motionEvent.getY(i);
-                            rcThrottle += (int)((lastY - y) * mult);
+                            rcThrottle += (int)((lastY - y) / mult);
                             rcThrottle = constrain(rcThrottle,1000,2000);
                             lastY = y;
                             break;
+                        }
+                        else
+                        {
+                            float x = motionEvent.getX(i);
+                            float rightX = ((x - middleX) / scaleYaw);
+
+                            if(Math.abs(rightX)>50)
+                            {
+                                int tempX = (int) rightX;
+                                if(rightX<0)
+                                {
+                                    tempX += 50;
+                                }
+                                else
+                                {
+                                    tempX -= 50;
+                                }
+                                rcYaw = medYawRC + tempX;
+                                rcYaw = constrain(rcYaw,1000,2000);
+                            }
+                            else
+                            {
+                                rcYaw = medYawRC;
+                            }
                         }
                     }
                 }

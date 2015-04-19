@@ -59,7 +59,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
     static final int minRC = 1000, maxRC = 2000;
     //, medRC = 1500;
-    static int medRollRC = 1500,medPitchRC = 1500,medYawRC = 1500;
+    protected static int medRollRC = 1500,medPitchRC = 1500,medYawRC = 1500;
 
     static int servo[] = new int[8],
             rcThrottle = minRC, rcRoll = medRollRC, rcPitch = medPitchRC, rcYaw =medYawRC,
@@ -347,21 +347,22 @@ public abstract class RemoteActivity extends ActionBarActivity {
         {
             rcRoll =  parseInt(map(rotationY, minY, maxY, minRC, maxRC));
             rcPitch =  parseInt(map(rotationX, minX, maxX, maxRC, minRC));
-//        rcYaw = parseInt( map(mouseX, 0, width, minRC, maxRC));
+//        rcYaw = parseInt( map((rotationX, minX, maxX, minRC, maxRC));
 //            rcPitch = 3000 - rcPitch;
         }
         else
         {
             rcRoll = medRollRC;
             rcPitch = medPitchRC;
+            rcYaw = medYawRC;
         }
 
         rcThrottle = constrain(rcThrottle, minRC, maxRC);
         rcRoll = constrain(rcRoll, minRC, maxRC);
         rcPitch = constrain(rcPitch, minRC, maxRC);
-        //rcYaw= constrain(rcYaw, minRC, maxRC);
+        rcYaw= constrain(rcYaw, minRC, maxRC);
         //rcYaw=rotationZ*100;
-        rcYaw=medYawRC;
+
     }
 
     protected int constrain(int val,int min,int max)

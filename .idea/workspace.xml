@@ -65,11 +65,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="UDP.java" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/UDP.java">
+      <file leaf-file-name="RemoteNativeActivity.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/RemoteNativeActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-1.509434" vertical-offset="1716" max-vertical-offset="2299">
-              <caret line="53" column="93" selection-start-line="53" selection-start-column="82" selection-end-line="53" selection-end-column="93" />
+            <state vertical-scroll-proportion="0.32294616" vertical-offset="969" max-vertical-offset="3572">
+              <caret line="74" column="0" selection-start-line="74" selection-start-column="0" selection-end-line="74" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -1219,12 +1219,10 @@
         <option value="$PROJECT_DIR$/Remote/src/main/res/values/strings_activity_settings.xml" />
         <option value="$PROJECT_DIR$/Remote/src/main/res/xml/pref_general.xml" />
         <option value="$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/TCP.java" />
-        <option value="$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/RemoteActivity.java" />
         <option value="$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/Bluetooth.java" />
         <option value="$PROJECT_DIR$/Remote/src/main/res/xml/pref_connection.xml" />
         <option value="$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/RemoteWebActivity.java" />
         <option value="$PROJECT_DIR$/Remote/src/main/assets/index.html" />
-        <option value="$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/RemoteNativeActivity.java" />
         <option value="$PROJECT_DIR$/Remote/src/main/res/layout/activity_remote_native.xml" />
         <option value="$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/SettingsActivity.java" />
         <option value="$PROJECT_DIR$/Remote/src/main/res/xml/pref_adjust.xml" />
@@ -1235,6 +1233,8 @@
         <option value="$PROJECT_DIR$/Remote/build.gradle" />
         <option value="$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/JoystickView.java" />
         <option value="$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/ProgressBarView.java" />
+        <option value="$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/RemoteActivity.java" />
+        <option value="$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/RemoteNativeActivity.java" />
       </list>
     </option>
   </component>
@@ -1272,7 +1272,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -1403,6 +1402,7 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="PackagesPane" />
       <pane id="Scope" />
     </panes>
   </component>
@@ -1418,7 +1418,7 @@
     <property name="project.structure.last.edited" value="Libraries" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
-    <property name="ANDROID_EXTENDED_DEVICE_CHOOSER_SERIALS" value="192.168.1.4:5555" />
+    <property name="ANDROID_EXTENDED_DEVICE_CHOOSER_SERIALS" value="192.168.1.3:5555" />
     <property name="DefaultHtmlFileTemplate" value="Html5" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="FullScreen" value="false" />
@@ -1432,6 +1432,7 @@
     <property name="ExportApk.ApkPath" value="D:\Users\admin\IdeaProjects\Multiwii-Remote\Remote" />
     <property name="ExportApk.Flavors" value="" />
     <property name="ExportApk.BuildType" value="release" />
+    <property name="ANDROID_EXTENDED_DEVICE_CHOOSER_AVD" value="Nexus_S_API_21" />
   </component>
   <component name="RecentsManager">
     <key name="android.template.packageName">
@@ -1647,6 +1648,8 @@
       <workItem from="1428317520337" duration="4332000" />
       <workItem from="1428583700903" duration="23000" />
       <workItem from="1428834146678" duration="2313000" />
+      <workItem from="1429413899991" duration="3043000" />
+      <workItem from="1429417666816" duration="722000" />
     </task>
     <task id="LOCAL-00001" summary="设置">
       <created>1427208991476</created>
@@ -1682,7 +1685,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="46361000" />
+    <option name="totallyTimeSpent" value="50126000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
@@ -1701,7 +1704,7 @@
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3267974" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3251634" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32843137" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Android" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.37745097" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Android" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.375817" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.27912253" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -1751,6 +1754,13 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/UDP.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="2413">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/Bluetooth.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="4123">
@@ -1974,13 +1984,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/RemoteActivity.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.33238637" vertical-offset="1498" max-vertical-offset="9785">
-          <caret line="110" column="19" selection-start-line="109" selection-start-column="7" selection-end-line="110" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/RemoteWebActivity.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.32590052" vertical-offset="114" max-vertical-offset="1653">
@@ -2023,7 +2026,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.5214408" vertical-offset="0" max-vertical-offset="608">
           <caret line="16" column="51" selection-start-line="16" selection-start-column="51" selection-end-line="16" selection-end-column="51" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2031,7 +2033,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.068100356" vertical-offset="0" max-vertical-offset="558">
           <caret line="2" column="0" selection-start-line="2" selection-start-column="0" selection-end-line="2" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2039,7 +2040,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="1.4665523" vertical-offset="0" max-vertical-offset="1292">
           <caret line="45" column="23" selection-start-line="45" selection-start-column="23" selection-end-line="45" selection-end-column="23" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2071,7 +2071,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.1303602" vertical-offset="0" max-vertical-offset="912">
           <caret line="4" column="26" selection-start-line="4" selection-start-column="26" selection-end-line="4" selection-end-column="26" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2079,15 +2078,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="1582" max-vertical-offset="2337">
           <caret line="106" column="51" selection-start-line="106" selection-start-column="51" selection-end-line="106" selection-end-column="51" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/RemoteNativeActivity.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.34819898" vertical-offset="2362" max-vertical-offset="2945">
-          <caret line="153" column="0" selection-start-line="153" selection-start-column="0" selection-end-line="153" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2095,7 +2085,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="1213" max-vertical-offset="2033">
           <caret line="34" column="18" selection-start-line="34" selection-start-column="18" selection-end-line="34" selection-end-column="18" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2103,14 +2092,28 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.5283019" vertical-offset="756" max-vertical-offset="1463">
           <caret line="59" column="0" selection-start-line="59" selection-start-column="0" selection-end-line="59" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/UDP.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-1.509434" vertical-offset="1716" max-vertical-offset="2299">
+        <state vertical-scroll-proportion="0.0" vertical-offset="836" max-vertical-offset="2299">
           <caret line="53" column="93" selection-start-line="53" selection-start-column="82" selection-end-line="53" selection-end-column="93" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/RemoteActivity.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="490" max-vertical-offset="9861">
+          <caret line="58" column="0" selection-start-line="58" selection-start-column="0" selection-end-line="58" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Remote/src/main/java/com/mobilejohnny/multiwiiremote/remote/RemoteNativeActivity.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.32294616" vertical-offset="969" max-vertical-offset="3572">
+          <caret line="74" column="0" selection-start-line="74" selection-start-column="0" selection-end-line="74" selection-end-column="0" />
           <folding />
         </state>
       </provider>
