@@ -347,6 +347,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         {
             rcRoll =  parseInt(map(rotationY, minY, maxY, minRC, maxRC));
             rcPitch =  parseInt(map(rotationX, minX, maxX, maxRC, minRC));
+            rcAUX2 = minRC;
 //        rcYaw = parseInt( map((rotationX, minX, maxX, minRC, maxRC));
 //            rcPitch = 3000 - rcPitch;
         }
@@ -355,6 +356,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
             rcRoll = medRollRC;
             rcPitch = medPitchRC;
             rcYaw = medYawRC;
+            rcAUX2 = maxRC;
         }
 
         rcThrottle = constrain(rcThrottle, minRC, maxRC);

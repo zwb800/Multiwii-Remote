@@ -29,6 +29,9 @@ public class RemoteNativeActivity extends RemoteActivity {
     private float scaleYaw;
     private JoystickView joyStick;
     private ProgressBarView progressBarThrottle;
+    private TextView txtAUX2;
+    private TextView txtAUX3;
+    private TextView txtAUX4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +47,9 @@ public class RemoteNativeActivity extends RemoteActivity {
         txtPitch = (TextView)findViewById(R.id.txtPitch);
         txtYaw = (TextView)findViewById(R.id.txtYaw);
         txtAUX1 = (TextView)findViewById(R.id.txtAUX1);
+        txtAUX2 = (TextView)findViewById(R.id.txtAUX2);
+        txtAUX3 = (TextView)findViewById(R.id.txtAUX3);
+        txtAUX4 = (TextView)findViewById(R.id.txtAUX4);
         txtFPS = (TextView)findViewById(R.id.txtFPS);
         joyStick = (JoystickView)findViewById(R.id.joyStick);
         progressBarThrottle = (ProgressBarView)findViewById(R.id.progressBarThrottle);
@@ -54,14 +60,14 @@ public class RemoteNativeActivity extends RemoteActivity {
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 if(b)
                 {
-                    rcAUX1 = 2000;
+                    rcAUX1 = maxRC;
                 }
                 else
                 {
-                    rcAUX1 = 1000;
+                    rcAUX1 = minRC;
                 }
 
-                rcThrottle = 1000;
+                rcThrottle = minRC;
                 compoundButton.setText(b?"Armed":"Disarm");
             }
         });
@@ -118,7 +124,7 @@ public class RemoteNativeActivity extends RemoteActivity {
                         {
                             float y = motionEvent.getY(i);
                             rcThrottle += (int)((lastY - y) / mult);
-                            rcThrottle = constrain(rcThrottle,1000,2000);
+                            rcThrottle = constrain(rcThrottle,minRC,maxRC);
                             lastY = y;
                             break;
                         }
@@ -139,7 +145,7 @@ public class RemoteNativeActivity extends RemoteActivity {
                                     tempX -= 50;
                                 }
                                 rcYaw = medYawRC + tempX;
-                                rcYaw = constrain(rcYaw,1000,2000);
+                                rcYaw = constrain(rcYaw,minRC,maxRC);
                             }
                             else
                             {
@@ -158,8 +164,13 @@ public class RemoteNativeActivity extends RemoteActivity {
                     else if(action == MotionEvent.ACTION_POINTER_UP)
                     {
                         int id = motionEvent.getPointerId(index);
-                        x = motionEvent.getX(id);
-                        y = motionEvent.getY(id);
+                        try {
+                            x = motionEvent.getX(id);
+                            y = motionEvent.getY(id);
+                        }catch (Exception e)
+                        {
+                            Log.e(getClass().getSimpleName(),e.toString());
+                        }
                     }
 
                     if (x < halfWidth) {
@@ -184,6 +195,11 @@ public class RemoteNativeActivity extends RemoteActivity {
         txtPitch.setText(rcPitch+"");
         txtYaw.setText(rcYaw+"");
         txtAUX1.setText(rcAUX1+"");
+
+        txtAUX2.setText(rcAUX2+"");
+        txtAUX3.setText(rcAUX3+"");
+        txtAUX4.setText(rcAUX4+"");
+
         joyStick.setPadPosition(rcRoll - 1000,2000 - rcPitch);
         progressBarThrottle.setValue((rcThrottle - 1000));
 
