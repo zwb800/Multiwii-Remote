@@ -57,7 +57,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private static final byte[] MSP_HEADER_BYTE = MSP_HEADER.getBytes();
     private static final int headerLength = MSP_HEADER_BYTE.length;
 
-    static final int minRC = 1000, maxRC = 2000;
+    static final int minRC = 1000, maxRC = 2000,medRC = 1500;
     //, medRC = 1500;
     protected static int medRollRC = 1500,medPitchRC = 1500,medYawRC = 1500;
 
@@ -105,12 +105,10 @@ public abstract class RemoteActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
 
         decorView = getWindow().getDecorView();
-        decorView.setKeepScreenOn(true);
+        decorView.setKeepScreenOn(true);//保持屏幕常亮
 
         if(getRequestedOrientation()!=ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
             return;
-
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
 
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
         connect_type = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("connection_type", "-1"));
@@ -119,6 +117,12 @@ public abstract class RemoteActivity extends ActionBarActivity {
         port = Integer.parseInt(preference.getString("port", "0"));
         medPitchRC = Integer.parseInt(preference.getString("middle_pitch", "1500"));
         medRollRC = Integer.parseInt(preference.getString("middle_roll", "1500"));
+
+        rcThrottle = minRC;
+        rcAUX1 = minRC;
+        rcAUX2 = minRC;
+        rcAUX3 = minRC;
+        rcAUX4 = minRC;
 
         BTReceiver = new BlueToothReceiver(this);
 
@@ -134,7 +138,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         tcp = new TCP();
         udp = new UDP();
         connect();
-        Log.d("RemoteActivity","onCreate");
+
     }
 
     protected abstract void updateUI() ;
@@ -347,7 +351,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
         {
             rcRoll =  parseInt(map(rotationY, minY, maxY, minRC, maxRC));
             rcPitch =  parseInt(map(rotationX, minX, maxX, maxRC, minRC));
-            rcAUX2 = minRC;
 //        rcYaw = parseInt( map((rotationX, minX, maxX, minRC, maxRC));
 //            rcPitch = 3000 - rcPitch;
         }
@@ -356,7 +359,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
             rcRoll = medRollRC;
             rcPitch = medPitchRC;
             rcYaw = medYawRC;
-            rcAUX2 = maxRC;
         }
 
         rcThrottle = constrain(rcThrottle, minRC, maxRC);

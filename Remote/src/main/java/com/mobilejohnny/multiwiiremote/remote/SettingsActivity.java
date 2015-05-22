@@ -5,12 +5,7 @@ import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
-import android.preference.RingtonePreference;
+import android.preference.*;
 import android.text.TextUtils;
 
 /**
@@ -81,6 +76,7 @@ public class SettingsActivity extends PreferenceActivity {
 
         // Trigger the listener immediately with the preference's
         // current value.
+
         sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
                 PreferenceManager
                         .getDefaultSharedPreferences(preference.getContext())
@@ -92,7 +88,7 @@ public class SettingsActivity extends PreferenceActivity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_connection);
-            addPreferencesFromResource(R.xml.pref_adjust);
+//            addPreferencesFromResource(R.xml.pref_adjust);
 
             final Preference prefConnection =  findPreference("connection_type");
             final Preference prefHost =  findPreference("host");
@@ -100,7 +96,7 @@ public class SettingsActivity extends PreferenceActivity {
             final Preference prefDeviceName =  findPreference("device_name");
             final Preference prefMiddlePitch =  findPreference("middle_pitch");
             final Preference prefMiddleRoll =  findPreference("middle_roll");
-
+            final Preference prefAltHold = findPreference("alt_hold");
 
             bindPreferenceSummaryToValue(prefDeviceName);
             bindPreferenceSummaryToValue(prefHost);

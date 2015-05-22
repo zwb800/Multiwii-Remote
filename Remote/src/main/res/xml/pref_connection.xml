@@ -1,6 +1,6 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 <PreferenceCategory
-        android:title="Connection Mode">
+        android:title="Connect Method">
 
 
     <ListPreference
@@ -20,7 +20,7 @@
             />
 
     <EditTextPreference
-            android:icon="@android:drawable/ic_menu_upload"
+            android:icon="@android:drawable/ic_menu_info_details"
         android:key="host"
         android:selectAllOnFocus="true"
         android:title="@string/pref_title_host"
@@ -31,7 +31,7 @@
         />
 
     <EditTextPreference
-            android:icon="@android:drawable/ic_menu_directions"
+            android:icon="@android:drawable/ic_menu_view"
             android:key="port"
             android:selectAllOnFocus="true"
             android:title="@string/pref_title_port"
@@ -43,4 +43,51 @@
             />
 
 </PreferenceCategory>
+    <PreferenceCategory
+            android:title="Adjust Middle">
+
+        <EditTextPreference
+                android:icon="@android:drawable/ic_menu_edit"
+                android:key="middle_pitch"
+                android:selectAllOnFocus="true"
+                android:title="Pitch"
+                android:inputType="number"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:maxLength="6"
+                android:defaultValue="1500"
+                />
+
+        <EditTextPreference
+                android:icon="@android:drawable/ic_menu_edit"
+                android:key="middle_roll"
+                android:selectAllOnFocus="true"
+                android:title="Roll"
+                android:inputType="number"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:maxLength="4"
+                android:numeric="integer"
+                android:defaultValue="1500"
+                />
+        <CheckBoxPreference
+                android:icon="@android:drawable/ic_menu_upload"
+                android:key="alt_hold"
+                android:title="Altitude hold"
+                android:defaultValue="0"
+                />
+
+        <Preference
+                android:icon="@android:drawable/ic_menu_send"
+                android:title="Start">
+            <intent
+                    android:action="com.mobilejohnny.multiwiiremote.remote.action.REMOTE_NATIVE"></intent>
+        </Preference>
+        <!--<Preference-->
+        <!--android:icon="@android:drawable/ic_menu_send"-->
+        <!--android:title="Start Web">-->
+        <!--<intent-->
+        <!--android:action="com.mobilejohnny.multiwiiremote.remote.action.REMOTE_WEB"></intent>-->
+        <!--</Preference>-->
+    </PreferenceCategory>
 </PreferenceScreen>

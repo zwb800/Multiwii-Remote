@@ -111,10 +111,11 @@ public class RemoteNativeActivity extends RemoteActivity {
                     }
                     if (x < halfWidth) {
                         lastY = y;
+                        rcAUX3 = minRC;//关闭定高
                     } else {
                         unLock();
                         middleX = x;
-
+                        rcAUX2 = minRC;//关闭定点
                     }
                 }
                 else if (action == MotionEvent.ACTION_MOVE ) {
@@ -173,10 +174,16 @@ public class RemoteNativeActivity extends RemoteActivity {
                         }
                     }
 
-                    if (x < halfWidth) {
+                    if (x < halfWidth) {//左侧
+                        if(rcThrottle > 1200)
+                        {
+                            rcAUX3 = maxRC;//启动定高
+                            rcThrottle = medRC;//油门回中
+                        }
 
-                    } else {
+                    } else {//右侧
                         lock();
+                        rcAUX2 = maxRC;//启动定点
                     }
 
                 }
