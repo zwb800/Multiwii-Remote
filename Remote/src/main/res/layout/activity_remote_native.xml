@@ -125,22 +125,23 @@
             android:text="0"
             android:layout_alignTop="@id/labelFPS"
             android:layout_toRightOf="@+id/labelFPS"/>
+    <com.mobilejohnny.multiwiiremote.remote.JoystickView
+            android:id="@+id/joyStick"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_centerInParent="true"
+            />
 
     <Switch
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Disarm"
+            android:text="ARM"
             android:id="@+id/switchArm"
             android:layout_alignParentTop="true"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"/>
 
-<com.mobilejohnny.multiwiiremote.remote.JoystickView
-        android:id="@+id/joyStick"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_centerInParent="true"
-        />
+
     <com.mobilejohnny.multiwiiremote.remote.ProgressBarView
             android:layout_width="20dp"
             android:layout_height="match_parent"

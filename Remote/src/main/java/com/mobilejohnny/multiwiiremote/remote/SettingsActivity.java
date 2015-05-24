@@ -31,6 +31,13 @@ public class SettingsActivity extends PreferenceActivity {
                 .commit();
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        finish();
+        //startActivity(getIntent());
+    }
+
     /**
      * A preference value change listener that updates the preference's summary
      * to reflect its new value.
@@ -97,12 +104,21 @@ public class SettingsActivity extends PreferenceActivity {
             final Preference prefMiddlePitch =  findPreference("middle_pitch");
             final Preference prefMiddleRoll =  findPreference("middle_roll");
             final Preference prefAltHold = findPreference("alt_hold");
+            final Preference prefStart = findPreference("start");
 
             bindPreferenceSummaryToValue(prefDeviceName);
             bindPreferenceSummaryToValue(prefHost);
             bindPreferenceSummaryToValue(prefPort);
             bindPreferenceSummaryToValue(prefMiddlePitch);
             bindPreferenceSummaryToValue(prefMiddleRoll);
+
+            prefStart.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    startActivityForResult(new Intent("com.mobilejohnny.multiwiiremote.remote.action.REMOTE_NATIVE"),10);
+                    return true;
+                }
+            });
 
             Preference.OnPreferenceChangeListener onPreferenceChangeListener = new Preference.OnPreferenceChangeListener() {
                 @Override

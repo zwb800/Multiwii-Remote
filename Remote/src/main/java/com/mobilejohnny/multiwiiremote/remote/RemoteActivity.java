@@ -79,12 +79,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
     static float minX=-1, maxX=1, minY=-1, maxY=1;
     static int horizonInstrSize = 100;
 
-    private Switch switchArm;
-    private TextView txtAUX1;
-    private TextView txtFPS;
-    private TextView txtRoll;
-    private TextView txtPitch;
-    private TextView txtThrottle;
     protected int fps;
     private boolean unlock;
     private BroadcastReceiver BTReceiver;
@@ -98,6 +92,8 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private static final int CONNECT_BLUETOOTH = 0;
     private static final int CONNECT_TCP = 1;
     private static final int CONNECT_UDP = 2;
+    protected boolean altHoldEnable;
+    protected SharedPreferences preference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,18 +101,20 @@ public abstract class RemoteActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
 
         decorView = getWindow().getDecorView();
-        decorView.setKeepScreenOn(true);//保持屏幕常亮
+
 
         if(getRequestedOrientation()!=ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
             return;
 
-        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+        decorView.setKeepScreenOn(true);//保持屏幕常亮
+        preference = PreferenceManager.getDefaultSharedPreferences(this);
         connect_type = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("connection_type", "-1"));
         device_name =  preference.getString("device_name","");
         host  = preference.getString("host","");
         port = Integer.parseInt(preference.getString("port", "0"));
         medPitchRC = Integer.parseInt(preference.getString("middle_pitch", "1500"));
         medRollRC = Integer.parseInt(preference.getString("middle_roll", "1500"));
+        altHoldEnable = preference.getBoolean("alt_hold",false);
 
         rcThrottle = minRC;
         rcAUX1 = minRC;
@@ -141,16 +139,37 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
     }
 
+    protected void saveSetting()
+    {
+        if(preference!=null)
+        {
+            SharedPreferences.Editor editor = preference.edit();
+            editor.putString("middle_pitch", medPitchRC+"");
+            editor.putString("middle_roll",medRollRC+"");
+            editor.commit();
+        }
+
+    }
+
     protected abstract void updateUI() ;
 
 
     @Override
     protected void onDestroy() {
+
         arm(false);
         updateRCPayload();
         sendRCPayload();
 
         exitSensor();
+        closeConnection();
+        saveSetting();
+
+        Log.i(getClass().getSimpleName(),"onDestory");
+        super.onDestroy();
+    }
+
+    private void closeConnection() {
         if (tBlue!= null)
             tBlue.close();
         if(tcp!=null)
@@ -159,8 +178,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
             udp.close();
         if(BTReceiver!= null)
         unregisterReceiver(BTReceiver);
-
-        super.onDestroy();
     }
 
     @Override
@@ -380,7 +397,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         return (char)val;
     }
 
-    private int parseInt(float val)
+    public int parseInt(float val)
     {
         return (int)val;
     }
@@ -481,11 +498,11 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
     public void arm(boolean theValue) {
         if (theValue) {
-            rcThrottle=1000;
-            rcAUX1 = 2000;
+            rcThrottle=minRC;
+            rcAUX1 = maxRC;
         }
         else {
-            rcAUX1 = 1000;
+            rcAUX1 = minRC;
         }
     }
 

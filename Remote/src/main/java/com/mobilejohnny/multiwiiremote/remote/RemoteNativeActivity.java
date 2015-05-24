@@ -2,9 +2,7 @@ package com.mobilejohnny.multiwiiremote.remote;
 
 import android.content.pm.ActivityInfo;
 import android.util.Log;
-import android.widget.CompoundButton;
-import android.widget.Switch;
-import android.widget.TextView;
+import android.widget.*;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -32,6 +30,9 @@ public class RemoteNativeActivity extends RemoteActivity {
     private TextView txtAUX2;
     private TextView txtAUX3;
     private TextView txtAUX4;
+
+    private float lockGen;
+    private long lastARMTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,14 +62,24 @@ public class RemoteNativeActivity extends RemoteActivity {
                 if(b)
                 {
                     rcAUX1 = maxRC;
+                    lastARMTime = System.currentTimeMillis();
                 }
                 else
                 {
                     rcAUX1 = minRC;
+
+                    long flightTime = (System.currentTimeMillis() - lastARMTime) / 1000;
+                    if(flightTime>60)
+                    {
+                        Toast.makeText(RemoteNativeActivity.this,(flightTime / 60)+" Minutes Flight",Toast.LENGTH_LONG).show();
+                    }
+                    else
+                    {
+                        Toast.makeText(RemoteNativeActivity.this,""+flightTime+" Seconds Flight",Toast.LENGTH_LONG).show();
+                    }
                 }
 
                 rcThrottle = minRC;
-                compoundButton.setText(b?"Armed":"Disarm");
             }
         });
 
@@ -77,13 +88,13 @@ public class RemoteNativeActivity extends RemoteActivity {
             public void run() {
                 halfWidth = decorView.getWidth() / 2;
                 mult = decorView.getHeight() / 540f;
+                lockGen = mult * 100;
                 scaleYaw = halfWidth / 960f;
-
             }
         });
 
         decorView.setOnTouchListener(new View.OnTouchListener() {
-            public float lastY;
+            public float[] lastY = new float[2];
 
             float middleX = 0;
 
@@ -110,12 +121,15 @@ public class RemoteNativeActivity extends RemoteActivity {
                         y = motionEvent.getY(id);
                     }
                     if (x < halfWidth) {
-                        lastY = y;
-                        rcAUX3 = minRC;//关闭定高
+                        lastY[0] = y;
+                        if(altHoldEnable)
+                        {
+                            rcAUX2 = minRC;
+                        }
                     } else {
+                        lastY[1] = y;
                         unLock();
                         middleX = x;
-                        rcAUX2 = minRC;//关闭定点
                     }
                 }
                 else if (action == MotionEvent.ACTION_MOVE ) {
@@ -124,9 +138,9 @@ public class RemoteNativeActivity extends RemoteActivity {
                         if(motionEvent.getX(i) < halfWidth )
                         {
                             float y = motionEvent.getY(i);
-                            rcThrottle += (int)((lastY - y) / mult);
+                            rcThrottle += (int)((lastY[0] - y) / mult);
                             rcThrottle = constrain(rcThrottle,minRC,maxRC);
-                            lastY = y;
+                            lastY[0] = y;
                             break;
                         }
                         else
@@ -175,15 +189,19 @@ public class RemoteNativeActivity extends RemoteActivity {
                     }
 
                     if (x < halfWidth) {//左侧
-                        if(rcThrottle > 1200)
+                        if(altHoldEnable &&
+                                rcThrottle > 1300)
                         {
-                            rcAUX3 = maxRC;//启动定高
-                            rcThrottle = medRC;//油门回中
+                            rcAUX2 = maxRC;
+                        }
+                    } else {//右侧
+                        if(lastY[1] - y > lockGen)
+                        {
+                            medRollRC =  parseInt(map(rotationY, minY, maxY, minRC, maxRC));
+                            medPitchRC =  parseInt(map(rotationX, minX, maxX, maxRC, minRC));
                         }
 
-                    } else {//右侧
                         lock();
-                        rcAUX2 = maxRC;//启动定点
                     }
 
                 }

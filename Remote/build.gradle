@@ -18,10 +18,10 @@ android {
 
     defaultConfig {
         applicationId "com.mobilejohnny.multiwiiremote.remote"
-        minSdkVersion 14
+        minSdkVersion 7
         targetSdkVersion 21
-        versionCode 3
-        versionName "1.0"
+        versionCode 4
+        versionName "1.1"
     }
 
     compileOptions {
