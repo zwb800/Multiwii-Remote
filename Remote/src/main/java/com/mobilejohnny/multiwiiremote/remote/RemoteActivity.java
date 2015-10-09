@@ -1,5 +1,7 @@
 package com.mobilejohnny.multiwiiremote.remote;
 
+import android.annotation.TargetApi;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
@@ -9,6 +11,9 @@ import android.content.pm.ActivityInfo;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorManager;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.preference.Preference;
@@ -22,8 +27,8 @@ import android.view.View;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
-import org.apache.http.auth.NTUserPrincipal;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -85,6 +90,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
     protected View decorView;
     private TCP tcp;
     private UDP udp;
+    private FDTI fdti;
     private int port = 8080;
     private String device_name = null;
     private String host = "192.168.0.142";
@@ -92,8 +98,11 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private static final int CONNECT_BLUETOOTH = 0;
     private static final int CONNECT_TCP = 1;
     private static final int CONNECT_UDP = 2;
+    private static final int CONNECT_USBOTG = 3;
     protected boolean altHoldEnable;
     protected SharedPreferences preference;
+    private UsbManager usbManager;
+    public  static  final String USB_PERMISSION = "com.mobilejohnny.multiwiiremote.remote.USB_PERMISSION";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,12 +118,12 @@ public abstract class RemoteActivity extends ActionBarActivity {
         decorView.setKeepScreenOn(true);//保持屏幕常亮
         preference = PreferenceManager.getDefaultSharedPreferences(this);
         connect_type = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("connection_type", "-1"));
-        device_name =  preference.getString("device_name","");
+        device_name =  preference.getString("device_name", "");
         host  = preference.getString("host","");
         port = Integer.parseInt(preference.getString("port", "0"));
         medPitchRC = Integer.parseInt(preference.getString("middle_pitch", "1500"));
         medRollRC = Integer.parseInt(preference.getString("middle_roll", "1500"));
-        altHoldEnable = preference.getBoolean("alt_hold",false);
+        altHoldEnable = preference.getBoolean("alt_hold", false);
 
         rcThrottle = minRC;
         rcAUX1 = minRC;
@@ -130,11 +139,16 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
         initSensor();
 
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1){
+            usbManager = (UsbManager) getSystemService(USB_SERVICE);
+        }
+
         arm(false);
 
         tBlue = new Bluetooth(this,device_name);
         tcp = new TCP();
         udp = new UDP();
+        fdti = new FDTI(usbManager);
         connect();
 
     }
@@ -184,13 +198,15 @@ public abstract class RemoteActivity extends ActionBarActivity {
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
-            decorView.setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                decorView.setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+            }
         }
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
@@ -300,9 +316,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
                         sendRCPayload();
 
                         updateUI();
-                        updateRCPayload();
-
-
+//                        updateRCPayload();
 
                         lastSend = millis;
                     }
@@ -526,7 +540,11 @@ public abstract class RemoteActivity extends ActionBarActivity {
                         } else if (connect_type == CONNECT_UDP) {
                             result = udp.connect(host, port);
                             msg = "UDP " + host + ":" + port + "";
+                        } else if (connect_type == CONNECT_USBOTG) {
+                            result = connectUsb();
+                            msg = "USB-OTG";
                         }
+
                         if(result)
                             msg += " Connected";
                         else
@@ -547,6 +565,30 @@ public abstract class RemoteActivity extends ActionBarActivity {
             }.start();
     }
 
+    @TargetApi(12)
+    private boolean connectUsb()
+    {
+        boolean result = false;
+        HashMap<String, UsbDevice> deviceSet =  usbManager.getDeviceList();
+        Log.i(getClass().getSimpleName(), "开始检测USB设备");
+        for (UsbDevice device:deviceSet.values())
+        {
+
+            if(usbManager.hasPermission(device))
+            {
+                Log.i("USB-OTG","开始连接"+device.getDeviceName());
+                result = fdti.begin(device);
+            }
+            else
+            {
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(this,0,new Intent(USB_PERMISSION),0);
+                usbManager.requestPermission(device,pendingIntent);
+            }
+        }
+
+        return result;
+    }
+
     public void send(byte[] data)
     {
         if(connect_type==CONNECT_BLUETOOTH)
@@ -560,6 +602,10 @@ public abstract class RemoteActivity extends ActionBarActivity {
         else if(connect_type==CONNECT_UDP)
         {
             udp.send(data);
+        }
+        else if(connect_type==CONNECT_USBOTG)
+        {
+            fdti.write(data);
         }
     }
 

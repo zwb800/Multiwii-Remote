@@ -125,10 +125,13 @@ public class SettingsActivity extends PreferenceActivity {
                 public boolean onPreferenceChange(Preference preference, Object o) {
 
                     String[] connectType = getResources().getStringArray(R.array.pref_connect_list_values);
-                    boolean isbluetooth = o.toString().equals(connectType[0]);
+                    String val = o.toString();
+                    boolean isbluetooth = val.equals(connectType[0]);
+                    boolean istcpudp =val.equals(connectType[1])||val.equals(connectType[2]);
                     prefDeviceName.setEnabled(isbluetooth);
-                    prefHost.setEnabled(!isbluetooth);
-                    prefPort.setEnabled(!isbluetooth);
+
+                    prefHost.setEnabled(istcpudp);
+                    prefPort.setEnabled(istcpudp);
 
                     return sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,o);
                 }
