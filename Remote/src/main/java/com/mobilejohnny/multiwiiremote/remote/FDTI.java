@@ -1,5 +1,6 @@
 package com.mobilejohnny.multiwiiremote.remote;
 
+import android.annotation.TargetApi;
 import android.hardware.usb.*;
 import android.util.Log;
 
@@ -10,21 +11,13 @@ import java.io.OutputStream;
 /**
  * Created by admin2 on 2015/4/11.
  */
-public class FDTI {
+@TargetApi(12)
+public class FDTI extends UsbSerial {
     private static final int REQUEST_TYPE_OUT = 0x40;
     private static final int REQUEST_RESET = 0;
     private static final int REQUEST_SET_BUADRATE = 3;
     private static final int STATUS_BYTE_LEN = 2;
 
-    private UsbManager manager;
-
-    private int bcdDevice = 1;//FT232RL
-    private int numOfChannels = 6;
-    private UsbEndpoint endpointIN;
-    private UsbEndpoint endpointOUT;
-    private UsbDeviceConnection connection;
-    private byte[] readBuffer;
-    private boolean closed = true;
 
     public FDTI(UsbManager manager)
     {
@@ -41,50 +34,12 @@ public class FDTI {
         if(!closed)
             return true;
 
-        connection = manager.openDevice(device);
-        int interfaceCount = device.getInterfaceCount();
-        device.getInterface(interfaceCount-1);
-
-        for (int j=0;j<interfaceCount;j++)
+        result = initEndpoint(device);
+        if(result)
         {
-            UsbInterface usbInterface = device.getInterface(j);
-
-            if(connection.claimInterface(usbInterface,true))
-            {
-                Log.i(this.getClass().getSimpleName(),device.getDeviceName()+" "+device.getVendorId()+" "+device.getProductId());
-                    reset();
-                    clear();
-                    setBaudRate();
-
-                    for (int i=0;i<usbInterface.getEndpointCount();i++)
-                    {
-                        UsbEndpoint endpoint = usbInterface.getEndpoint(i);
-                        if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK)
-                        {
-                            if(endpoint.getDirection() == UsbConstants.USB_DIR_IN)
-                            {
-                                endpointIN = endpoint;
-                            }
-                            else
-                            {
-                                endpointOUT = endpoint;
-                            }
-                        }
-                    }
-
-
-                    if(endpointIN!=null && endpointOUT!=null)
-                    {
-                        closed = false;
-                        result = true;
-                        break;
-                    }
-
-            }
-            else {
-                Log.e(this.getClass().getSimpleName(), "claimInterface error");
-                break;
-            }
+            reset();
+            clear();
+            setBaudRate();
         }
 
         return result;
@@ -143,12 +98,6 @@ public class FDTI {
 
 
 
-    public void close()
-    {
-        if(connection!=null) {
-            connection.close();
-            closed = true;
-        }
-    }
+
 
 }

@@ -3,10 +3,7 @@ package com.mobilejohnny.multiwiiremote.remote;
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
+import android.content.*;
 import android.content.pm.ActivityInfo;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -90,7 +87,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
     protected View decorView;
     private TCP tcp;
     private UDP udp;
-    private FDTI fdti;
+    private UsbSerial usbSerial;
     private int port = 8080;
     private String device_name = null;
     private String host = "192.168.0.142";
@@ -103,6 +100,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
     protected SharedPreferences preference;
     private UsbManager usbManager;
     public  static  final String USB_PERMISSION = "com.mobilejohnny.multiwiiremote.remote.USB_PERMISSION";
+    private Receiver receiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,7 +117,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         preference = PreferenceManager.getDefaultSharedPreferences(this);
         connect_type = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("connection_type", "-1"));
         device_name =  preference.getString("device_name", "");
-        host  = preference.getString("host","");
+        host  = preference.getString("host", "");
         port = Integer.parseInt(preference.getString("port", "0"));
         medPitchRC = Integer.parseInt(preference.getString("middle_pitch", "1500"));
         medRollRC = Integer.parseInt(preference.getString("middle_roll", "1500"));
@@ -148,8 +146,8 @@ public abstract class RemoteActivity extends ActionBarActivity {
         tBlue = new Bluetooth(this,device_name);
         tcp = new TCP();
         udp = new UDP();
-        fdti = new FDTI(usbManager);
         connect();
+        receiver = new Receiver();
 
     }
 
@@ -167,6 +165,22 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
     protected abstract void updateUI() ;
 
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(USB_PERMISSION);
+        registerReceiver(receiver, intentFilter);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if(receiver!=null) {
+            unregisterReceiver(receiver);
+        }
+    }
 
     @Override
     protected void onDestroy() {
@@ -577,7 +591,21 @@ public abstract class RemoteActivity extends ActionBarActivity {
             if(usbManager.hasPermission(device))
             {
                 Log.i("USB-OTG","开始连接"+device.getDeviceName());
-                result = fdti.begin(device);
+
+                if(CH34x.isSupported(device))
+                {
+                    Log.i("USB-OTG","检测到CH340");
+                    usbSerial = new CH34x(usbManager);
+
+                }
+                else
+                {
+                    usbSerial = new FDTI(usbManager);
+                }
+
+                result = usbSerial.begin(device);
+
+
             }
             else
             {
@@ -605,7 +633,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         }
         else if(connect_type==CONNECT_USBOTG)
         {
-            fdti.write(data);
+            usbSerial.write(data);
         }
     }
 
@@ -619,5 +647,17 @@ public abstract class RemoteActivity extends ActionBarActivity {
         unlock = false;
     }
 
+
+    public class Receiver extends BroadcastReceiver
+    {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent.getAction().contentEquals(USB_PERMISSION))
+            {
+                connect();
+            }
+        }
+    }
 
 }

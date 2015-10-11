@@ -38,8 +38,8 @@ public class RemoteNativeActivity extends RemoteActivity {
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        if(getRequestedOrientation()!= ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-            return;
+//        if(getRequestedOrientation()!= ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+//            return;
 
         setContentView(R.layout.activity_remote_native);
 
