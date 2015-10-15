@@ -190,19 +190,21 @@ private String device_name=null;
 
 
 private byte[] inBuffer = new byte[32];//try?error
-private int bytesRead = 0;
-  public void read() 
-  {    
-    try {
+  public byte[] read() throws IOException {
+    int bytesRead = 0;
+
+    if(inStream!=null)
+    {
       if (inStream.available()>0) {
-        bytesRead = inStream.read(inBuffer);  
-//        this.floneRemote.parseMSPMessage(inBuffer,bytesRead);
+          bytesRead = inStream.read(inBuffer);
       }
-    } 
-    catch (Exception e) {
-      Log.e(TAG, "Read failed", e);
-      inBuffer = null;
     }
+
+    byte[] buffer = new byte[bytesRead];
+    for (int i = 0; i < buffer.length; i++) {
+      buffer[i] = inBuffer[i];
+    }
+    return buffer;
   }
 
 //Falla

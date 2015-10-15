@@ -125,13 +125,23 @@
             android:text="0"
             android:layout_alignTop="@id/labelFPS"
             android:layout_toRightOf="@+id/labelFPS"/>
+
     <com.mobilejohnny.multiwiiremote.remote.JoystickView
             android:id="@+id/joyStick"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_centerInParent="true"
             />
-
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:id="@+id/txtVbat"
+                android:text=""
+                android:textColor="@android:color/white"
+                android:layout_centerHorizontal="true"
+                android:layout_alignParentTop="true"/>
     <Switch
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

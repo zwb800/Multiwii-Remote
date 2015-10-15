@@ -25,6 +25,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -55,9 +56,11 @@ public abstract class RemoteActivity extends ActionBarActivity {
     static int cycleGPS = 0;  //GlobalPosition
     static int lastCycleGPS = 0;
 
-    private static final String MSP_HEADER = "$M<";
-    private static final byte[] MSP_HEADER_BYTE = MSP_HEADER.getBytes();
-    private static final int headerLength = MSP_HEADER_BYTE.length;
+    //<协议头>,<方向>,<长度>,<消息ID>,<数据>,<crc>
+    private static final String MSP_HEADER = "$M<";//协议头
+
+//    private static final byte[] MSP_HEADER_BYTE = MSP_HEADER.getBytes();
+//    private static final int headerLength = MSP_HEADER_BYTE.length;
 
     static final int minRC = 1000, maxRC = 2000,medRC = 1500;
     //, medRC = 1500;
@@ -67,14 +70,14 @@ public abstract class RemoteActivity extends ActionBarActivity {
             rcThrottle = minRC, rcRoll = medRollRC, rcPitch = medPitchRC, rcYaw =medYawRC,
             rcAUX1=minRC, rcAUX2=minRC, rcAUX3=minRC, rcAUX4=minRC;
 
-    private static final int
-
-            MSP_SET_RAW_RC           =200;
+    private static final int MSP_SET_RAW_RC = 200;//设置RC数据的消息ID
+    private static final int MSP_ANALOG = 110;//获取电压
 
 
 
     private android.hardware.SensorEventListener sensorEventListener;
-    private long lastSend;
+    private long lastSend;//遥控信号最后发送时间
+    private long lastRequestAnalog;//电压请求最后发送时间
 
     //Sensor;
     static float rotationX=0, rotationY=0, rotationZ=0;
@@ -101,6 +104,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private UsbManager usbManager;
     public  static  final String USB_PERMISSION = "com.mobilejohnny.multiwiiremote.remote.USB_PERMISSION";
     private Receiver receiver;
+    protected byte vbat;//电压
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +123,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         device_name =  preference.getString("device_name", "");
         host  = preference.getString("host", "");
         port = Integer.parseInt(preference.getString("port", "0"));
+
         medPitchRC = Integer.parseInt(preference.getString("middle_pitch", "1500"));
         medRollRC = Integer.parseInt(preference.getString("middle_roll", "1500"));
         altHoldEnable = preference.getBoolean("alt_hold", false);
@@ -149,6 +154,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         connect();
         receiver = new Receiver();
 
+        startReceive();
     }
 
     protected void saveSetting()
@@ -193,7 +199,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         closeConnection();
         saveSetting();
 
-        Log.i(getClass().getSimpleName(),"onDestory");
+        Log.i(getClass().getSimpleName(), "onDestory");
         super.onDestroy();
     }
 
@@ -323,17 +329,22 @@ public abstract class RemoteActivity extends ActionBarActivity {
                     }
                 }
 
-                if (millis-lastSend > 50)
-                    if (tBlue!= null) {
-                        calculateRCValues();
-                        updateRCPayload();
-                        sendRCPayload();
+                if (millis-lastSend > 50) {
+                    calculateRCValues();
+                    updateRCPayload();
+                    sendRCPayload();
 
-                        updateUI();
+                    updateUI();
 //                        updateRCPayload();
 
-                        lastSend = millis;
-                    }
+                    lastSend = millis;
+                }
+
+                if(millis - lastRequestAnalog > 525)
+                {
+                    sendRequestAnalog();
+                    lastRequestAnalog = millis;
+                }
             }
 
             @Override
@@ -419,11 +430,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         return Math.max(Math.min(val, max), min);
 
     }
-    
-    private char parseChar(int val)
-    {
-        return (char)val;
-    }
+
 
     public int parseInt(float val)
     {
@@ -434,92 +441,99 @@ public abstract class RemoteActivity extends ActionBarActivity {
         return var3 + (var4 - var3) * ((var0 - var1) / (var2 - var1));
     }
 
-    static Character[] payloadChar = new Character[16];
+    static byte[] payloadChar = new byte[16];
 
     public void updateRCPayload() {
-        payloadChar[0] = parseChar(rcRoll & 0xFF); //strip the 'most significant bit' (MSB) and buffer\
-        payloadChar[1] = parseChar(rcRoll >> 8 & 0xFF); //move the MSB to LSB, strip the MSB and buffer
-        payloadChar[2] = parseChar(rcPitch & 0xFF);
-        payloadChar[3] = parseChar(rcPitch >> 8 & 0xFF);
-        payloadChar[4] = parseChar(rcYaw & 0xFF);
-        payloadChar[5] = parseChar(rcYaw >> 8 & 0xFF);
-        payloadChar[6] = parseChar(rcThrottle & 0xFF);
-        payloadChar[7] = parseChar(rcThrottle >> 8 & 0xFF);
+        payloadChar[0] = (byte)(rcRoll & 0xFF); //strip the 'most significant bit' (MSB) and buffer\
+        payloadChar[1] = (byte)(rcRoll >> 8 & 0xFF); //move the MSB to LSB, strip the MSB and buffer
+        payloadChar[2] = (byte)(rcPitch & 0xFF);
+        payloadChar[3] = (byte)(rcPitch >> 8 & 0xFF);
+        payloadChar[4] = (byte)(rcYaw & 0xFF);
+        payloadChar[5] = (byte)(rcYaw >> 8 & 0xFF);
+        payloadChar[6] = (byte)(rcThrottle & 0xFF);
+        payloadChar[7] = (byte)(rcThrottle >> 8 & 0xFF);
 
         //aux1
-        payloadChar[8] = parseChar(rcAUX1 & 0xFF);
-        payloadChar[9] = parseChar(rcAUX1 >> 8 & 0xFF);
+        payloadChar[8] = (byte)(rcAUX1 & 0xFF);
+        payloadChar[9] = (byte)(rcAUX1 >> 8 & 0xFF);
 
         //aux2
-        payloadChar[10] = parseChar(rcAUX2 & 0xFF);
-        payloadChar[11] = parseChar(rcAUX2 >> 8 & 0xFF);
+        payloadChar[10] = (byte)(rcAUX2 & 0xFF);
+        payloadChar[11] = (byte)(rcAUX2 >> 8 & 0xFF);
 
         //aux3
-        payloadChar[12] = parseChar(rcAUX3 & 0xFF);
-        payloadChar[13] = parseChar(rcAUX3 >> 8 & 0xFF);
+        payloadChar[12] = (byte)(rcAUX3 & 0xFF);
+        payloadChar[13] = (byte)(rcAUX3 >> 8 & 0xFF);
 
         //aux4
-        payloadChar[14] = parseChar(rcAUX4 & 0xFF);
-        payloadChar[15] = parseChar(rcAUX4 >> 8 & 0xFF);
+        payloadChar[14] = (byte)(rcAUX4 & 0xFF);
+        payloadChar[15] = (byte)(rcAUX4 >> 8 & 0xFF);
     }
 
-    static private int irmsp_RC =0;
-    static private final int mspLenght_RC = 22;
-    static private int bRMSP_RC=0;
-    private static List<Byte> msp_RC;
+    //发送遥控信号
     public void sendRCPayload() {
-        byte[] arr_RC;
-        irmsp_RC =0;
-        bRMSP_RC=0;
-        arr_RC = new byte[mspLenght_RC];
-        msp_RC = requestMSP(MSP_SET_RAW_RC, payloadChar );
-        //msp_RC = requestMSPRC();
+        byte[] msp = requestMSP(MSP_SET_RAW_RC,payloadChar);//封装协议
 
         try {
-            for (bRMSP_RC=0;bRMSP_RC<mspLenght_RC;bRMSP_RC++) {
-                arr_RC[irmsp_RC++] = msp_RC.get(bRMSP_RC);
-            }
-            send(arr_RC);
+
+            send(msp);
         }
         catch(NullPointerException ex) {
-            //Log.e("","Warning: Packet not sended.");
+            Log.e("","Warning: Packet not sended.");
+        }
+    }
+
+    //发送电池状态请求
+    protected void sendRequestAnalog()
+    {
+        byte[] msp = requestMSP(MSP_ANALOG,null);//封装协议
+
+        try {
+            send(msp);
+        }
+        catch(NullPointerException ex) {
+            Log.e("","Warning: Packet not sended.");
         }
     }
 
     //send msp with payload
-    private List<Byte> requestMSP (int msp, Character[] payload) {
-        List<Byte> bf;
-        int cList;
-        byte checksumMSP;
-        byte pl_size;
-        int cMSP;
-        int payloadLength;
+    private byte[] requestMSP (int messageid, byte[] payload) {
 
-        if (msp < 0) {
-            return null;
-        }
-        bf = new LinkedList<Byte>();
-        for (cList=0;cList<headerLength;cList++) {
-            bf.add( MSP_HEADER_BYTE[cList] );
+        List<Byte> bf = new LinkedList<Byte>();
+
+        //添加协议头
+        byte[] mspHead = (MSP_HEADER).getBytes();
+        for (int i=0;i<mspHead.length;i++) {
+            bf.add(mspHead[i]);
         }
 
-        checksumMSP=0;
-        pl_size = (byte)((payload != null ? parseInt(payload.length) : 0)&0xFF);
+        //添加长度
+        byte pl_size = (byte)((payload != null ? parseInt(payload.length) : 0)&0xFF);
         bf.add(pl_size);
-        checksumMSP ^= (pl_size&0xFF);
 
-        bf.add((byte)(msp & 0xFF));
-        checksumMSP ^= (msp&0xFF);
+        //添加命令ID
+        bf.add((byte)(messageid & 0xFF));
 
         if (payload != null) {
-            payloadLength = payload.length;
-            for (cMSP=0;cMSP<payloadLength;cMSP++) {
-                bf.add((byte)(payload[cMSP]&0xFF));
-                checksumMSP ^= (payload[cMSP]&0xFF);
+            for (int i=0;i<payload.length;i++) {
+                bf.add((byte)(payload[i]&0xFF));
             }
         }
+
+        //计算CRC
+        byte checksumMSP = 0;
+        for (int i = mspHead.length; i < bf.size(); i++) {
+            checksumMSP ^= (bf.get(i));
+        }
         bf.add(checksumMSP);
-        return (bf);
+
+
+        byte[] result = new byte[bf.size()];
+        Byte[] result2 = bf.toArray(new Byte[0]);
+        for (int i = 0; i < result.length; i++) {
+            result[i] = result2[i];
+        }
+        return result;
     }
 
 
@@ -635,6 +649,52 @@ public abstract class RemoteActivity extends ActionBarActivity {
         {
             usbSerial.write(data);
         }
+    }
+
+    //接收数据
+    protected void startReceive()
+    {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while(!Thread.currentThread().isInterrupted())
+                    {
+                        byte[] rxData = tBlue.read();
+                        if(rxData.length>5)
+                        {
+                            Log.i("rx",convertToString(rxData));
+
+                            int messageid = rxData[4];
+                            if(messageid== MSP_ANALOG)
+                            {
+                                vbat = rxData[5];
+
+                            }
+                        }
+
+                        Thread.sleep(100,0);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        }).start();
+    }
+
+    String convertToString(byte[] data) {
+        StringBuffer stringBuffer = new StringBuffer(data.length*2);
+        for (int i=0;i<data.length;i++)
+        {
+
+            stringBuffer.append( String.format("%x ",data[i]).toUpperCase());
+
+        }
+        return stringBuffer.toString();
     }
 
     protected void unLock()

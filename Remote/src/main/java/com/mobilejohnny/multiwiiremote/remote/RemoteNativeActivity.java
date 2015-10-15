@@ -1,6 +1,7 @@
 package com.mobilejohnny.multiwiiremote.remote;
 
 import android.content.pm.ActivityInfo;
+import android.graphics.Color;
 import android.util.Log;
 import android.widget.*;
 
@@ -33,13 +34,12 @@ public class RemoteNativeActivity extends RemoteActivity {
 
     private float lockGen;
     private long lastARMTime;
+    private TextView txtVbat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-//        if(getRequestedOrientation()!= ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-//            return;
 
         setContentView(R.layout.activity_remote_native);
 
@@ -54,6 +54,7 @@ public class RemoteNativeActivity extends RemoteActivity {
         txtFPS = (TextView)findViewById(R.id.txtFPS);
         joyStick = (JoystickView)findViewById(R.id.joyStick);
         progressBarThrottle = (ProgressBarView)findViewById(R.id.progressBarThrottle);
+        txtVbat = (TextView)findViewById(R.id.txtVbat);
 
         switchArm = (Switch)findViewById(R.id.switchArm);
         switchArm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -224,6 +225,9 @@ public class RemoteNativeActivity extends RemoteActivity {
         txtAUX2.setText(rcAUX2+"");
         txtAUX3.setText(rcAUX3+"");
         txtAUX4.setText(rcAUX4+"");
+        txtVbat.setText((vbat/10.0)+"v");
+        txtVbat.setTextColor(vbat < 109 ? Color.WHITE : Color.BLACK);
+        txtVbat.setBackgroundColor(vbat < 109 ? Color.RED:Color.GREEN);
 
         joyStick.setPadPosition(rcRoll - 1000,2000 - rcPitch);
         progressBarThrottle.setValue((rcThrottle - 1000));
