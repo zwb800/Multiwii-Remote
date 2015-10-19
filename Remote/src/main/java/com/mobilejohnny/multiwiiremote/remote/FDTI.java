@@ -7,6 +7,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 /**
  * Created by admin2 on 2015/4/11.
@@ -65,15 +66,15 @@ public class FDTI extends UsbSerial {
         return connection.bulkTransfer(endpointOUT,data,data.length,0);
     }
 
-    public int read(byte[] data) throws IOException {
-        if(closed)
-            throw new IOException("Connection is closed");
+    public byte[] read()   {
         int len = 0;
         synchronized (this) {
             len = connection.bulkTransfer(endpointIN, readBuffer, readBuffer.length, 0);
         }
         int maxPacketSize = endpointIN.getMaxPacketSize();
-        return filterStatusBytes(data, len, maxPacketSize);
+//        return filterStatusBytes(data, len, maxPacketSize);
+        byte[] data = Arrays.copyOfRange(readBuffer, 0, len);
+        return data;
     }
 
     private int filterStatusBytes(byte[] data, int len, int maxPacketSize) {

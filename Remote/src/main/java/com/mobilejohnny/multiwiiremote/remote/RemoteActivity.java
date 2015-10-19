@@ -94,7 +94,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private int port = 8080;
     private String device_name = null;
     private String host = "192.168.0.142";
-    private int connect_type = CONNECT_UDP;
+    private int connect_type = -1;
     private static final int CONNECT_BLUETOOTH = 0;
     private static final int CONNECT_TCP = 1;
     private static final int CONNECT_UDP = 2;
@@ -105,6 +105,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
     public  static  final String USB_PERMISSION = "com.mobilejohnny.multiwiiremote.remote.USB_PERMISSION";
     private Receiver receiver;
     protected byte vbat;//电压
+    private boolean exit = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -191,6 +192,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
     @Override
     protected void onDestroy() {
 
+        exit =true;
         arm(false);
         updateRCPayload();
         sendRCPayload();
@@ -199,7 +201,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
         closeConnection();
         saveSetting();
 
-        Log.i(getClass().getSimpleName(), "onDestory");
         super.onDestroy();
     }
 
@@ -475,10 +476,10 @@ public abstract class RemoteActivity extends ActionBarActivity {
         byte[] msp = requestMSP(MSP_SET_RAW_RC,payloadChar);//封装协议
 
         try {
-
             send(msp);
         }
         catch(NullPointerException ex) {
+            ex.printStackTrace();
             Log.e("","Warning: Packet not sended.");
         }
     }
@@ -550,9 +551,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
     String msg = "";
     public void connect() {
-//        Toast.makeText(this,"connecting flone",Toast.LENGTH_SHORT).show();
-        //Toast.makeText(getApplicationContext(), "calibrating flone", Toast.LENGTH_SHORT).show();
-        //sendRequestMSP(requestMSP(MSP_ACC_CALIBRATION));
         final Handler handler = new Handler();
             new Thread(){
                 @Override
@@ -647,7 +645,11 @@ public abstract class RemoteActivity extends ActionBarActivity {
         }
         else if(connect_type==CONNECT_USBOTG)
         {
-            usbSerial.write(data);
+            if(usbSerial!=null && (!usbSerial.isClosed()))
+            {
+                usbSerial.write(data);
+            }
+
         }
     }
 
@@ -658,9 +660,9 @@ public abstract class RemoteActivity extends ActionBarActivity {
             @Override
             public void run() {
                 try {
-                    while(!Thread.currentThread().isInterrupted())
+                    while((!Thread.currentThread().isInterrupted()) && (!exit) )
                     {
-                        byte[] rxData = tBlue.read();
+                        byte[] rxData = receiveBytes();
                         if(rxData.length>5)
                         {
                             Log.i("rx",convertToString(rxData));
@@ -669,7 +671,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
                             if(messageid== MSP_ANALOG)
                             {
                                 vbat = rxData[5];
-
                             }
                         }
 
@@ -677,13 +678,31 @@ public abstract class RemoteActivity extends ActionBarActivity {
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
 
 
             }
         }).start();
+    }
+
+    private byte[] receiveBytes() {
+        byte[] rxData = new byte[0];
+        try {
+            if (connect_type == CONNECT_BLUETOOTH) {
+                rxData = tBlue.read();
+            } else if (connect_type == CONNECT_TCP) {
+
+            } else if (connect_type == CONNECT_UDP) {
+
+            } else if (connect_type == CONNECT_USBOTG) {
+                if (usbSerial != null)
+                    rxData = usbSerial.read();
+            }
+        }catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return rxData;
     }
 
     String convertToString(byte[] data) {

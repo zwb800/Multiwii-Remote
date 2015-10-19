@@ -14,11 +14,16 @@ public abstract class UsbSerial {
     protected UsbEndpoint endpointIN;
     protected UsbEndpoint endpointOUT;
     protected UsbDeviceConnection connection;
-    protected byte[] readBuffer;
+    protected byte[] readBuffer = new byte[1024];
     protected boolean closed = true;
 
     public abstract boolean begin(UsbDevice device);
     public abstract int write(byte[] data);
+    public abstract byte[] read();
+    public boolean isClosed()
+    {
+        return closed;
+    }
 
     public boolean initEndpoint(UsbDevice device) {
 

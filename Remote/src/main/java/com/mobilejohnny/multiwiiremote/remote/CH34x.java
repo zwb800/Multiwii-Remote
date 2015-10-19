@@ -4,6 +4,9 @@ import android.annotation.TargetApi;
 import android.hardware.usb.*;
 import android.util.Log;
 
+import java.io.IOException;
+import java.util.Arrays;
+
 /**
  * Created by zwb on 15-10-11.
  */
@@ -55,6 +58,21 @@ public class CH34x extends UsbSerial {
         return connection.bulkTransfer(endpointOUT,data,data.length,0);
     }
 
+    public byte[] read()  {
+        int len = 0;
+        synchronized (this) {
+            len = connection.bulkTransfer(endpointIN, readBuffer, readBuffer.length, 0);
+        }
+        int maxPacketSize = endpointIN.getMaxPacketSize();
+
+        byte[] data = new byte[0];
+        if(len>0)
+        {
+           data = Arrays.copyOfRange(readBuffer,0,len);
+        }
+
+        return data;
+    }
 
     public static boolean isSupported(UsbDevice device)
     {
