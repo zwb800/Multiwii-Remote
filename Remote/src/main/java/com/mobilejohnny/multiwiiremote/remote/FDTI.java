@@ -14,6 +14,10 @@ import java.util.Arrays;
  */
 @TargetApi(12)
 public class FDTI extends UsbSerial {
+    private static final ID[] IDs = new ID[]{
+            new ID(0x0403, 0x6001),
+            new ID(0x0403, 0x6015)
+    };
     private static final int REQUEST_TYPE_OUT = 0x40;
     private static final int REQUEST_RESET = 0;
     private static final int REQUEST_SET_BUADRATE = 3;
@@ -27,7 +31,22 @@ public class FDTI extends UsbSerial {
         readBuffer = new byte[1024];
     }
 
+    public static boolean isSupported(UsbDevice device)
+    {
+        boolean result = false;
+        int vid = device.getVendorId();//厂商ID
+        int pid = device.getProductId();//产品ID
 
+        for (int i = 0; i <IDs.length; i++) {
+            ID id = IDs[i];
+            if(id.vid == vid && id.pid == pid)
+            {
+                result = true;
+                break;
+            }
+        }
+        return result;
+    }
 
     public boolean begin(UsbDevice device) {
 

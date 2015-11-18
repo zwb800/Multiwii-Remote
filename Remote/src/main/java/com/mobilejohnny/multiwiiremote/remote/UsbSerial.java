@@ -85,4 +85,15 @@ public abstract class UsbSerial {
             closed = true;
         }
     }
+
+    protected static class ID
+    {
+        public int vid;
+        public int pid;
+        public ID(int vid,int pid)
+        {
+            this.vid = vid;
+            this.pid = pid;
+        }
+    }
 }

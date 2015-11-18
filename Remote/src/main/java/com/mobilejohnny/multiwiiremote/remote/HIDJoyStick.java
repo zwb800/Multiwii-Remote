@@ -1,28 +1,25 @@
 package com.mobilejohnny.multiwiiremote.remote;
 
 import android.annotation.TargetApi;
-import android.hardware.usb.*;
-import android.util.Log;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 /**
  * Created by zwb on 15-10-11.
  */
 @TargetApi(12)
-public class CH34x extends UsbSerial {
+public class HIDJoyStick extends UsbSerial {
     private static final ID[] IDs = new ID[]{
-            new ID(0x4348, 0x5523),
-            new ID(0x1a86, 0x7523),
-            new ID(0x1a86, 0x5523)
+            new ID(0x061c, 0x5523)
     };
-    
+
     private static final int REQUEST_TYPE_OUT = 0x41;
     private static final int REQUEST_WRITE_REGISTER = 0x9A;
 
 
-    public CH34x(UsbManager manager)
+    public HIDJoyStick(UsbManager manager)
     {
         this.manager = manager;
     }
@@ -37,7 +34,7 @@ public class CH34x extends UsbSerial {
 
         if(result)
         {
-            setBaudRate();
+//            setBaudRate();
         }
 
         return result;
@@ -82,7 +79,7 @@ public class CH34x extends UsbSerial {
 
         for (int i = 0; i <IDs.length; i++) {
             ID id = IDs[i];
-            if(id.vid == vid && id.pid == pid)
+            if(id.vid == vid )
             {
                 result = true;
                 break;

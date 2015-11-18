@@ -33,6 +33,9 @@ import java.util.List;
 
 public abstract class RemoteActivity extends ActionBarActivity {
 
+    private static final int USB_OTG_RESULT_FAILED = 0;
+    private static final int USB_OTG_RESULT_SUCCESS = 1;
+    private static final int USB_OTG_RESULT_NO_PERMISSION = 2;
     // Sensor objects
     static SensorManager mSensorManager;
     static Sensor accelerometer;
@@ -552,77 +555,97 @@ public abstract class RemoteActivity extends ActionBarActivity {
     String msg = "";
     public void connect() {
         final Handler handler = new Handler();
+        if (connect_type == CONNECT_USBOTG) {
+            int result = connectUsb();
+            if(result != USB_OTG_RESULT_NO_PERMISSION) {
+                Toast.makeText(RemoteActivity.this,
+                        "USB-OTG "+(result==USB_OTG_RESULT_SUCCESS?"Connected":"Connect failed"),
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
+        else
+        {
+
             new Thread(){
                 @Override
                 public void run() {
-                    boolean result = false;
-                    try {
-                        if (connect_type == CONNECT_BLUETOOTH) {
-                            result = tBlue.connect();
-                            msg = device_name;
-                        } else if (connect_type == CONNECT_TCP) {
-                            result = tcp.connect(host, port);
-                            msg = "TCP " + host + ":" + port;
-                        } else if (connect_type == CONNECT_UDP) {
-                            result = udp.connect(host, port);
-                            msg = "UDP " + host + ":" + port + "";
-                        } else if (connect_type == CONNECT_USBOTG) {
-                            result = connectUsb();
-                            msg = "USB-OTG";
+
+                        boolean result = false;
+                        try {
+
+                            if (connect_type == CONNECT_BLUETOOTH) {
+                                result = tBlue.connect();
+                                msg = device_name;
+                            } else if (connect_type == CONNECT_TCP) {
+                                result = tcp.connect(host, port);
+                                msg = "TCP " + host + ":" + port;
+                            } else if (connect_type == CONNECT_UDP) {
+                                result = udp.connect(host, port);
+                                msg = "UDP " + host + ":" + port + "";
+                            }
+
+                            if(result)
+                                msg += " Connected";
+                            else
+                                msg+= " Connect Failed";
+                        }
+                        catch(Exception e)
+                        {
+                            Log.e("MWC Remote","Connect Error",e);
                         }
 
-                        if(result)
-                            msg += " Connected";
-                        else
-                            msg+= " Connect Failed";
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(RemoteActivity.this, msg, Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
-                    catch(Exception e)
-                    {
-                        Log.e("MWC Remote","Connect Error",e);
-                    }
-
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(RemoteActivity.this, msg, Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
             }.start();
+        }
     }
 
     @TargetApi(12)
-    private boolean connectUsb()
+    private int connectUsb()
     {
-        boolean result = false;
+        int result = USB_OTG_RESULT_FAILED;
         HashMap<String, UsbDevice> deviceSet =  usbManager.getDeviceList();
-        Log.i(getClass().getSimpleName(), "开始检测USB设备");
+        Log.i("USB-OTG","USB设备数:"+deviceSet.size());
+
         for (UsbDevice device:deviceSet.values())
         {
-
             if(usbManager.hasPermission(device))
             {
-                Log.i("USB-OTG","开始连接"+device.getDeviceName());
+                Log.i("USB-OTG","开始连接"+device.getDeviceName()+" "+device.getVendorId()+" "
+                        +device.getDeviceId());
 
                 if(CH34x.isSupported(device))
                 {
                     Log.i("USB-OTG","检测到CH340");
                     usbSerial = new CH34x(usbManager);
-
+                }
+                else if(FDTI.isSupported(device))
+                {
+                    Log.i("USB-OTG","检测到FTDI");
+                    usbSerial = new FDTI(usbManager);
                 }
                 else
                 {
-                    usbSerial = new FDTI(usbManager);
+                    Log.i(getClass().getSimpleName(), "不支持的USB设备");
                 }
 
-                result = usbSerial.begin(device);
-
-
+                if(usbSerial!=null && usbSerial.begin(device))
+                {
+                    result = USB_OTG_RESULT_SUCCESS;
+                }
             }
             else
             {
-                PendingIntent pendingIntent = PendingIntent.getBroadcast(this,0,new Intent(USB_PERMISSION),0);
-                usbManager.requestPermission(device,pendingIntent);
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(USB_PERMISSION), 0);
+                usbManager.requestPermission(device, pendingIntent);
+
+                result = USB_OTG_RESULT_NO_PERMISSION;
+                break;
             }
         }
 
@@ -729,12 +752,14 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
     public class Receiver extends BroadcastReceiver
     {
-
         @Override
         public void onReceive(Context context, Intent intent) {
             if(intent.getAction().contentEquals(USB_PERMISSION))
             {
-                connect();
+                if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false))
+                {
+                    connect();
+                }
             }
         }
     }
