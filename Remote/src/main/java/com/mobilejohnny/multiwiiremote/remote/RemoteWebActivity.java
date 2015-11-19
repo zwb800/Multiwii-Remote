@@ -79,14 +79,14 @@ public class RemoteWebActivity extends RemoteActivity {
         @JavascriptInterface
         public void setLock(boolean lock)
         {
-            if(lock)
-            {
-                lock();
-            }
-            else
-            {
-                unLock();
-            }
+//            if(lock)
+//            {
+//                lock();
+//            }
+//            else
+//            {
+//                unLock();
+//            }
 
         }
 

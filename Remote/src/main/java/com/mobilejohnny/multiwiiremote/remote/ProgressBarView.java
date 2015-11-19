@@ -31,7 +31,7 @@ public class ProgressBarView extends View {
     {
         padding = 10;
         rectBar = new Rect(padding,padding,getWidth()-padding,getHeight() - padding);
-         a = 1000 / (float)(getHeight() - padding - padding) ;
+         a = 100 / (float)(getHeight() - padding - padding) ;
     }
 
     @Override
@@ -42,7 +42,7 @@ public class ProgressBarView extends View {
 
     public void setValue(int value)
     {
-        value = Math.max(0,Math.min(value,1000));
+        value = Math.max(0,Math.min(value,100));
         rectBar.top = (int) (getHeight() - padding - value / a);
         postInvalidate();
     }

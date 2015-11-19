@@ -45,8 +45,8 @@ public class JoystickView extends View {
         int right = left+ padWidth;
         int bottom = top+ padHeight;
 
-        a = 1000 / (float)(getWidth() - padWidth);
-        b = 1000 / (float)(getHeight() - padHeight);
+        a = 100 / (float)(getWidth() - padWidth);
+        b = 100 / (float)(getHeight() - padHeight);
 
         padRectB =  new RectF(0,0,getWidth(),getHeight());
 

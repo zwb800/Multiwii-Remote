@@ -18,9 +18,7 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
+import android.view.*;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,6 +34,9 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private static final int USB_OTG_RESULT_FAILED = 0;
     private static final int USB_OTG_RESULT_SUCCESS = 1;
     private static final int USB_OTG_RESULT_NO_PERMISSION = 2;
+    protected static final int INPUT_MODE_GRAVITY = 1;
+    protected static final int INPUT_MODE_JOYSTICK = 2;
+    protected static final int INPUT_MODE_NONE = 0;
     // Sensor objects
     static SensorManager mSensorManager;
     static Sensor accelerometer;
@@ -59,25 +60,20 @@ public abstract class RemoteActivity extends ActionBarActivity {
     static int cycleGPS = 0;  //GlobalPosition
     static int lastCycleGPS = 0;
 
-    //<协议头>,<方向>,<长度>,<消息ID>,<数据>,<crc>
-    private static final String MSP_HEADER = "$M<";//协议头
+
 
 //    private static final byte[] MSP_HEADER_BYTE = MSP_HEADER.getBytes();
 //    private static final int headerLength = MSP_HEADER_BYTE.length;
 
-    static final int minRC = 1000, maxRC = 2000,medRC = 1500;
+    static final int minRC = 1150, maxRC = 1850,medRC = 1500, minThrottleRC = 1000, maxThrottleRC = 2000;
+
     //, medRC = 1500;
-    protected static int medRollRC = 1500,medPitchRC = 1500,medYawRC = 1500;
+    protected static int medRollRC = medRC,medPitchRC = medRC,medYawRC = medRC;
 
     static int servo[] = new int[8],
-            rcThrottle = minRC, rcRoll = medRollRC, rcPitch = medPitchRC, rcYaw =medYawRC,
+            rcThrottle = minThrottleRC,
+            rcRoll = medRollRC, rcPitch = medPitchRC, rcYaw =medYawRC,
             rcAUX1=minRC, rcAUX2=minRC, rcAUX3=minRC, rcAUX4=minRC;
-
-    private static final int MSP_SET_RAW_RC = 200;//设置RC数据的消息ID
-    private static final int MSP_ANALOG = 110;//获取电压
-
-
-
     private android.hardware.SensorEventListener sensorEventListener;
     private long lastSend;//遥控信号最后发送时间
     private long lastRequestAnalog;//电压请求最后发送时间
@@ -107,8 +103,19 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private UsbManager usbManager;
     public  static  final String USB_PERMISSION = "com.mobilejohnny.multiwiiremote.remote.USB_PERMISSION";
     private Receiver receiver;
-    protected byte vbat;//电压
+    protected int vbat;//电压
     private boolean exit = false;
+    protected int inputMode = INPUT_MODE_NONE;
+    private float joyStickRoll,joyStickPitch,joyStickYaw,joyStickThrottle;
+    private float minJoyStickRoll = 0.8f;
+    private float maxJoyStickRoll = -0.8f;
+    private float minJoyStickPitch = 0.8f;
+    private float maxJoyStickPitch = -0.8f;
+    private float minJoyStickYaw = -0.8f;
+    private float maxJoyStickYaw = 0.8f;
+    private float minJoyStickThrottle = -0.8f;
+    private float maxJoyStickThrottle = 0.8f;
+    private long lastARMTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,9 +137,20 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
         medPitchRC = Integer.parseInt(preference.getString("middle_pitch", "1500"));
         medRollRC = Integer.parseInt(preference.getString("middle_roll", "1500"));
+        minJoyStickRoll = preference.getFloat("min_roll", minJoyStickRoll);
+        maxJoyStickRoll = preference.getFloat("max_roll", maxJoyStickRoll);
+        minJoyStickPitch = preference.getFloat("min_pitch", minJoyStickPitch);
+        maxJoyStickPitch = preference.getFloat("max_pitch", maxJoyStickPitch);
+        minJoyStickYaw = preference.getFloat("min_yaw", minJoyStickYaw);
+        maxJoyStickYaw = preference.getFloat("max_yaw", maxJoyStickYaw);
+        minJoyStickThrottle = preference.getFloat("min_throttle", minJoyStickThrottle);
+        maxJoyStickThrottle = preference.getFloat("max_throttle", maxJoyStickThrottle);
+
+        Log.i("JoyStick","minRoll:"+minJoyStickRoll+" maxRoll:"+maxJoyStickRoll);
+
         altHoldEnable = preference.getBoolean("alt_hold", false);
 
-        rcThrottle = minRC;
+        rcThrottle = minThrottleRC;
         rcAUX1 = minRC;
         rcAUX2 = minRC;
         rcAUX3 = minRC;
@@ -166,8 +184,16 @@ public abstract class RemoteActivity extends ActionBarActivity {
         if(preference!=null)
         {
             SharedPreferences.Editor editor = preference.edit();
-            editor.putString("middle_pitch", medPitchRC+"");
+            editor.putString("middle_pitch", medPitchRC + "");
             editor.putString("middle_roll",medRollRC+"");
+            editor.putFloat("max_roll", maxJoyStickRoll);
+            editor.putFloat("min_roll", minJoyStickRoll);
+            editor.putFloat("max_pitch",maxJoyStickPitch);
+            editor.putFloat("min_pitch",minJoyStickPitch);
+            editor.putFloat("max_yaw",maxJoyStickYaw);
+            editor.putFloat("min_yaw",minJoyStickYaw);
+            editor.putFloat("max_throttle",maxJoyStickThrottle);
+            editor.putFloat("min_throttle",minJoyStickThrottle);
             editor.commit();
         }
 
@@ -197,8 +223,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
         exit =true;
         arm(false);
-        updateRCPayload();
-        sendRCPayload();
+        sendRC();
 
         exitSensor();
         closeConnection();
@@ -291,7 +316,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
             @Override
             public void onSensorChanged(SensorEvent event) {
-                millis = System.currentTimeMillis();
+
                 //if (event.accuracy == SensorManager.SENSOR_STATUS_ACCURACY_LOW) return;
                 switch (event.sensor.getType()) {
                     case Sensor.TYPE_MAGNETIC_FIELD:
@@ -333,22 +358,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
                     }
                 }
 
-                if (millis-lastSend > 50) {
-                    calculateRCValues();
-                    updateRCPayload();
-                    sendRCPayload();
 
-                    updateUI();
-//                        updateRCPayload();
-
-                    lastSend = millis;
-                }
-
-                if(millis - lastRequestAnalog > 525)
-                {
-                    sendRequestAnalog();
-                    lastRequestAnalog = millis;
-                }
             }
 
             @Override
@@ -398,21 +408,120 @@ public abstract class RemoteActivity extends ActionBarActivity {
         mSensorManager.registerListener(sensorEventListener, gravity, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
+
+
     public void exitSensor()
     {
         if (sensorAvailable) mSensorManager.unregisterListener(sensorEventListener);
     }
 
-    public void calculateRCValues() {
-//        if (overControl) { //((mouseY > minlineY) && (mouseY < maxlineY))
-//            rcThrottle =  parseInt(map(mouseY, minlineY, maxlineY, maxRC, minRC));
-//        }
-        if(unlock)
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        Log.i("Keyup", keyCode + "");
+        if(keyCode == KeyEvent.KEYCODE_BUTTON_1)
         {
-            rcRoll =  parseInt(map(rotationY, minY, maxY, minRC, maxRC));
-            rcPitch =  parseInt(map(rotationX, minX, maxX, maxRC, minRC));
-//        rcYaw = parseInt( map((rotationX, minX, maxX, minRC, maxRC));
-//            rcPitch = 3000 - rcPitch;
+            arm(false);
+            isDown = false;
+            return true;
+        }
+        else if(keyCode == KeyEvent.KEYCODE_BACK)
+        {
+            if(rcAUX1 == minRC) {//未解锁时才能退出
+                finish();
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    boolean isDown = false;
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if ((event.getSource() & InputDevice.SOURCE_KEYBOARD)
+                == InputDevice.SOURCE_KEYBOARD) {
+            Log.i("Keydown", keyCode + "");
+            if (keyCode == KeyEvent.KEYCODE_BUTTON_1) {
+                if (!isDown) {
+                    arm(true);
+                    isDown = true;
+                }
+                return true;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent event) {
+
+        if((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK &&
+                event.getAction() == MotionEvent.ACTION_MOVE)
+        {
+            inputMode = INPUT_MODE_JOYSTICK;
+            int historySize = event.getHistorySize();
+            //处理历史移动
+            for (int i = 0; i < historySize; i++) {
+                processMovement(event, i);
+            }
+
+            //处理及时移动
+            processMovement(event, -1);
+            return true;
+        }
+
+        return super.onGenericMotionEvent(event);
+    }
+
+    private void processMovement(MotionEvent event, int i) {
+        joyStickRoll = getAxisValue(event,MotionEvent.AXIS_Z, i);
+        joyStickPitch = getAxisValue(event,MotionEvent.AXIS_X, i);
+        joyStickYaw = getAxisValue(event,MotionEvent.AXIS_RY, i);
+        joyStickThrottle = getAxisValue(event, MotionEvent.AXIS_Y, i);
+
+        minJoyStickRoll = getMaxValue(joyStickRoll, minJoyStickRoll);
+        maxJoyStickRoll = getMaxValue(joyStickRoll, maxJoyStickRoll);
+        minJoyStickPitch = getMaxValue(joyStickRoll, minJoyStickPitch);
+        maxJoyStickPitch = getMaxValue(joyStickRoll,maxJoyStickPitch);
+        minJoyStickYaw = getMaxValue(joyStickRoll, minJoyStickYaw);
+        maxJoyStickYaw = getMaxValue(joyStickRoll,maxJoyStickYaw);
+        minJoyStickThrottle = getMaxValue(joyStickRoll, minJoyStickThrottle);
+        maxJoyStickThrottle = getMaxValue(joyStickRoll,maxJoyStickThrottle);
+
+//        Log.i("Joystick", "roll:" + joyStickRoll + "pitch:" + joyStickPitch + " yaw:" + joyStickYaw + " throttle:" + joyStickThrottle);
+    }
+
+    private float getAxisValue(MotionEvent event,int axis, int historyIndex) {
+        float value = historyIndex> -1 ? event.getHistoricalAxisValue(axis,historyIndex):event.getAxisValue(axis);
+        return value;
+    }
+
+    private float getMaxValue(float n,float ori)
+    {
+        float value = ori;
+        if(ori > 0 && n >ori)
+        {
+            value = n;
+        }
+        else if(ori < 0 && n < ori)
+        {
+            value = n;
+        }
+
+        return value;
+    }
+
+
+    public void calculateRCValues() {
+        if(inputMode == INPUT_MODE_GRAVITY)
+        {
+            rcRoll =  Math.round(map(rotationY, minY, maxY, minRC, maxRC));
+            rcPitch =  Math.round(map(rotationX, minX, maxX, maxRC, minRC));
+        }
+        else if(inputMode == INPUT_MODE_JOYSTICK)
+        {
+            rcRoll =  Math.round(map(joyStickRoll, minJoyStickRoll, maxJoyStickRoll, minRC, maxRC));
+            rcPitch =  Math.round(map(joyStickPitch, minJoyStickPitch, maxJoyStickPitch, maxRC, minRC));
+            rcYaw =  Math.round(map(joyStickYaw, minJoyStickYaw, maxJoyStickYaw, maxRC, minRC));
+            rcThrottle =  Math.round(map(joyStickThrottle, minJoyStickThrottle, maxJoyStickThrottle, maxThrottleRC, minThrottleRC));
         }
         else
         {
@@ -421,12 +530,10 @@ public abstract class RemoteActivity extends ActionBarActivity {
             rcYaw = medYawRC;
         }
 
-        rcThrottle = constrain(rcThrottle, minRC, maxRC);
+        rcThrottle = constrain(rcThrottle, minThrottleRC, maxThrottleRC);
         rcRoll = constrain(rcRoll, minRC, maxRC);
         rcPitch = constrain(rcPitch, minRC, maxRC);
         rcYaw= constrain(rcYaw, minRC, maxRC);
-        //rcYaw=rotationZ*100;
-
     }
 
     protected int constrain(int val,int min,int max)
@@ -435,121 +542,50 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
     }
 
-
-    public int parseInt(float val)
-    {
-        return (int)val;
+    public static final float map(float value, float instart, float inend, float outstart, float outend) {
+        return outstart + (outend - outstart) / (inend - instart) * (value - instart);
     }
 
-    public static final float map(float var0, float var1, float var2, float var3, float var4) {
-        return var3 + (var4 - var3) * ((var0 - var1) / (var2 - var1));
-    }
-
-    static byte[] payloadChar = new byte[16];
-
-    public void updateRCPayload() {
-        payloadChar[0] = (byte)(rcRoll & 0xFF); //strip the 'most significant bit' (MSB) and buffer\
-        payloadChar[1] = (byte)(rcRoll >> 8 & 0xFF); //move the MSB to LSB, strip the MSB and buffer
-        payloadChar[2] = (byte)(rcPitch & 0xFF);
-        payloadChar[3] = (byte)(rcPitch >> 8 & 0xFF);
-        payloadChar[4] = (byte)(rcYaw & 0xFF);
-        payloadChar[5] = (byte)(rcYaw >> 8 & 0xFF);
-        payloadChar[6] = (byte)(rcThrottle & 0xFF);
-        payloadChar[7] = (byte)(rcThrottle >> 8 & 0xFF);
-
-        //aux1
-        payloadChar[8] = (byte)(rcAUX1 & 0xFF);
-        payloadChar[9] = (byte)(rcAUX1 >> 8 & 0xFF);
-
-        //aux2
-        payloadChar[10] = (byte)(rcAUX2 & 0xFF);
-        payloadChar[11] = (byte)(rcAUX2 >> 8 & 0xFF);
-
-        //aux3
-        payloadChar[12] = (byte)(rcAUX3 & 0xFF);
-        payloadChar[13] = (byte)(rcAUX3 >> 8 & 0xFF);
-
-        //aux4
-        payloadChar[14] = (byte)(rcAUX4 & 0xFF);
-        payloadChar[15] = (byte)(rcAUX4 >> 8 & 0xFF);
-    }
-
-    //发送遥控信号
-    public void sendRCPayload() {
-        byte[] msp = requestMSP(MSP_SET_RAW_RC,payloadChar);//封装协议
-
-        try {
-            send(msp);
-        }
-        catch(NullPointerException ex) {
-            ex.printStackTrace();
-            Log.e("","Warning: Packet not sended.");
-        }
+    private void sendRC() {
+        send(MSP.getRCPocket(rcRoll, rcPitch, rcYaw, rcThrottle, rcAUX1, rcAUX2, rcAUX3, rcAUX4));
     }
 
     //发送电池状态请求
     protected void sendRequestAnalog()
     {
-        byte[] msp = requestMSP(MSP_ANALOG,null);//封装协议
-
-        try {
-            send(msp);
-        }
-        catch(NullPointerException ex) {
-            Log.e("","Warning: Packet not sended.");
-        }
+        send(MSP.getAnalogPocket());
     }
 
-    //send msp with payload
-    private byte[] requestMSP (int messageid, byte[] payload) {
-
-        List<Byte> bf = new LinkedList<Byte>();
-
-        //添加协议头
-        byte[] mspHead = (MSP_HEADER).getBytes();
-        for (int i=0;i<mspHead.length;i++) {
-            bf.add(mspHead[i]);
-        }
-
-        //添加长度
-        byte pl_size = (byte)((payload != null ? parseInt(payload.length) : 0)&0xFF);
-        bf.add(pl_size);
-
-        //添加命令ID
-        bf.add((byte)(messageid & 0xFF));
-
-        if (payload != null) {
-            for (int i=0;i<payload.length;i++) {
-                bf.add((byte)(payload[i]&0xFF));
+    public boolean arm(boolean b) {
+        if(b && rcAUX1 == minRC)
+        {
+            if(rcThrottle>minThrottleRC)
+            {
+                Toast.makeText(RemoteActivity.this,"油门未至最低",Toast.LENGTH_SHORT).show();
+                return false;
             }
-        }
 
-        //计算CRC
-        byte checksumMSP = 0;
-        for (int i = mspHead.length; i < bf.size(); i++) {
-            checksumMSP ^= (bf.get(i));
-        }
-        bf.add(checksumMSP);
-
-
-        byte[] result = new byte[bf.size()];
-        Byte[] result2 = bf.toArray(new Byte[0]);
-        for (int i = 0; i < result.length; i++) {
-            result[i] = result2[i];
-        }
-        return result;
-    }
-
-
-
-    public void arm(boolean theValue) {
-        if (theValue) {
-            rcThrottle=minRC;
             rcAUX1 = maxRC;
+            lastARMTime = System.currentTimeMillis();
         }
-        else {
+        else if(b == false && rcAUX1 == maxRC)
+        {
             rcAUX1 = minRC;
+
+            long flightTime = (System.currentTimeMillis() - lastARMTime) / 1000;
+            if(flightTime>60)
+            {
+                Toast.makeText(RemoteActivity.this,(flightTime / 60)+" Minutes Flight",Toast.LENGTH_LONG).show();
+            }
+            else
+            {
+                Toast.makeText(RemoteActivity.this,""+flightTime+" Seconds Flight",Toast.LENGTH_LONG).show();
+            }
+
+            return true;
         }
+
+        return false;
     }
 
     String msg = "";
@@ -672,32 +708,51 @@ public abstract class RemoteActivity extends ActionBarActivity {
             {
                 usbSerial.write(data);
             }
-
         }
     }
 
     //接收数据
     protected void startReceive()
     {
+        final Handler handler = new Handler();
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
+                    Thread.sleep(100,0);
+
                     while((!Thread.currentThread().isInterrupted()) && (!exit) )
                     {
-                        byte[] rxData = receiveBytes();
-                        if(rxData.length>5)
-                        {
-                            Log.i("rx",convertToString(rxData));
+                        long millis = System.currentTimeMillis();
 
-                            int messageid = rxData[4];
-                            if(messageid== MSP_ANALOG)
-                            {
-                                vbat = rxData[5];
-                            }
+                        if (millis-lastSend > 50) {
+                            calculateRCValues();
+                            sendRC();
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateUI();
+                                }
+                            });
+
+                            lastSend = millis;
                         }
 
-                        Thread.sleep(100,0);
+                        if(millis - lastRequestAnalog > 520)
+                        {
+                            sendRequestAnalog();
+                            lastRequestAnalog = millis;
+                        }
+
+                        byte[] rxData = receiveBytes();
+
+                        int v = MSP.getVbat(rxData);
+                        if(v>0)
+                        {
+                            vbat = v;
+                        }
+
+                        Thread.sleep(10,0);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -727,28 +782,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
         }
         return rxData;
     }
-
-    String convertToString(byte[] data) {
-        StringBuffer stringBuffer = new StringBuffer(data.length*2);
-        for (int i=0;i<data.length;i++)
-        {
-
-            stringBuffer.append( String.format("%x ",data[i]).toUpperCase());
-
-        }
-        return stringBuffer.toString();
-    }
-
-    protected void unLock()
-    {
-        unlock = true;
-    }
-
-    protected void lock()
-    {
-        unlock = false;
-    }
-
 
     public class Receiver extends BroadcastReceiver
     {
