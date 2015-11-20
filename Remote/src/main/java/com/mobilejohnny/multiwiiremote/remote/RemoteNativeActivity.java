@@ -38,6 +38,7 @@ public class RemoteNativeActivity extends RemoteActivity {
     private long lastARMTime;
     private TextView txtVbat;
     private boolean isSet = false;
+    private int countCycle = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -196,19 +197,23 @@ public class RemoteNativeActivity extends RemoteActivity {
 
         txtVbat.setText((vbat / 10.0) + "v");
         txtVbat.setTextColor(vbat < 109 ? Color.WHITE : Color.BLACK);
-        txtVbat.setBackgroundColor(vbat < 109 ? Color.RED:Color.GREEN);
+        txtVbat.setBackgroundColor(vbat < 109 ? Color.RED : Color.GREEN);
 
-        joyStick.setPadPosition(Math.round(map(rcRoll,minRC,maxRC,0,100)),Math.round(map(rcPitch,minRC,maxRC,100,0)));
-        progressBarThrottle.setValue(Math.round(map(rcThrottle,minThrottleRC,maxThrottleRC,0,100)));
+        joyStick.setPadPosition(Math.round(map(rcRoll, minRC, maxRC, 0, 100)), Math.round(map(rcPitch, minRC, maxRC, 100, 0)));
+        progressBarThrottle.setValue(Math.round(map(rcThrottle, minThrottleRC, maxThrottleRC, 0, 100)));
 
-        long currentTime = System.currentTimeMillis();
-        long dur = currentTime - time;
+        if(countCycle >= 9)
+        {
+            long currentTime = System.currentTimeMillis();
+            long dur = currentTime - time;
+            time = currentTime;
 
-        fps = (int) (1000.0 / (float)dur);
-        txtFPS.setText(fps+"");
-
-        time = currentTime;
+            fps = (int) Math.round(10000.0 / (float) dur);
+            txtFPS.setText(fps+"");
+            countCycle = 0;
+        }
+        else{
+            countCycle++;
+        }
     }
-
-
 }

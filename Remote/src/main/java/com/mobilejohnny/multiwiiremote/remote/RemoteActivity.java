@@ -65,7 +65,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
 //    private static final byte[] MSP_HEADER_BYTE = MSP_HEADER.getBytes();
 //    private static final int headerLength = MSP_HEADER_BYTE.length;
 
-    static final int minRC = 1150, maxRC = 1850,medRC = 1500, minThrottleRC = 1150, maxThrottleRC = 1850;
+    static final int minRC = 1150, maxRC = 1850,medRC = 1500, minThrottleRC = 1000, maxThrottleRC = 2000;
 
     //, medRC = 1500;
     protected static int medRollRC = medRC,medPitchRC = medRC,medYawRC = medRC;
@@ -105,7 +105,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private Receiver receiver;
     protected int vbat;//电压
     private boolean exit = false;
-    protected int inputMode = INPUT_MODE_TOUCH;
+    protected int inputMode = 0;
     private float joyStickRoll,joyStickPitch,joyStickYaw,joyStickThrottle;
     private float minJoyStickRoll = -0.8f;
     private float maxJoyStickRoll = 0.8f;
@@ -241,7 +241,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         if(udp!=null)
             udp.close();
         if(BTReceiver!= null)
-        unregisterReceiver(BTReceiver);
+            unregisterReceiver(BTReceiver);
     }
 
     @Override
@@ -474,7 +474,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private void processMovement(MotionEvent event, int i) {
         joyStickRoll = getAxisValue(event,MotionEvent.AXIS_Z, i,true);
         joyStickPitch = getAxisValue(event,MotionEvent.AXIS_X, i,true);
-        joyStickYaw = getAxisValue(event,MotionEvent.AXIS_RY, i,true);
+        joyStickYaw = getAxisValue(event, MotionEvent.AXIS_RY, i, true);
         joyStickThrottle = getAxisValue(event, MotionEvent.AXIS_Y, i, false);
 
         minJoyStickRoll = getMaxValue(joyStickRoll, minJoyStickRoll);
@@ -486,7 +486,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         minJoyStickThrottle = getMaxValue(joyStickRoll, minJoyStickThrottle);
         maxJoyStickThrottle = getMaxValue(joyStickRoll,maxJoyStickThrottle);
 
-        Log.i("Joystick", "roll:" + joyStickRoll + "pitch:" + joyStickPitch + " yaw:" + joyStickYaw + " throttle:" + joyStickThrottle);
+//        Log.i("Joystick", "roll:" + joyStickRoll + "pitch:" + joyStickPitch + " yaw:" + joyStickYaw + " throttle:" + joyStickThrottle);
     }
 
     private float getAxisValue(MotionEvent event,int axis, int historyIndex,boolean flat) {
@@ -524,9 +524,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
         return value;
     }
-
-
-
 
     public void calculateRCValues() {
         if(inputMode == INPUT_MODE_TOUCH)
@@ -634,37 +631,37 @@ public abstract class RemoteActivity extends ActionBarActivity {
                 @Override
                 public void run() {
 
-                        boolean result = false;
-                        try {
+                    boolean result = false;
+                    try {
 
-                            if (connect_type == CONNECT_BLUETOOTH) {
-                                result = tBlue.connect();
-                                msg = device_name;
-                            } else if (connect_type == CONNECT_TCP) {
-                                result = tcp.connect(host, port);
-                                msg = "TCP " + host + ":" + port;
-                            } else if (connect_type == CONNECT_UDP) {
-                                result = udp.connect(host, port);
-                                msg = "UDP " + host + ":" + port + "";
-                            }
-
-                            if(result)
-                                msg += " Connected";
-                            else
-                                msg+= " Connect Failed";
-                        }
-                        catch(Exception e)
-                        {
-                            Log.e("MWC Remote","Connect Error",e);
+                        if (connect_type == CONNECT_BLUETOOTH) {
+                            result = tBlue.connect();
+                            msg = device_name;
+                        } else if (connect_type == CONNECT_TCP) {
+                            result = tcp.connect(host, port);
+                            msg = "TCP " + host + ":" + port;
+                        } else if (connect_type == CONNECT_UDP) {
+                            result = udp.connect(host, port);
+                            msg = "UDP " + host + ":" + port + "";
                         }
 
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(RemoteActivity.this, msg, Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                        if(result)
+                            msg += " Connected";
+                        else
+                            msg+= " Connect Failed";
                     }
+                    catch(Exception e)
+                    {
+                        Log.e("MWC Remote","Connect Error",e);
+                    }
+
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(RemoteActivity.this, msg, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
             }.start();
         }
     }
@@ -751,25 +748,23 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
                     while((!Thread.currentThread().isInterrupted()) && (!exit) )
                     {
-                        long millis = System.currentTimeMillis();
+                        Log.i("cycle", (50 - (System.currentTimeMillis() - lastSend)) + "");
+                        Thread.sleep(Math.max(0, 40 - (System.currentTimeMillis() - lastSend)), 0);
+                        lastSend = System.currentTimeMillis();
 
-                        if (millis-lastSend > 50) {
-                            calculateRCValues();
-                            sendRC();
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    updateUI();
-                                }
-                            });
+                        calculateRCValues();
+                        sendRC();
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                updateUI();
+                            }
+                        });
 
-                            lastSend = millis;
-                        }
-
-                        if(millis - lastRequestAnalog > 520)
+                        if(System.currentTimeMillis() - lastRequestAnalog > 500)
                         {
+                            lastRequestAnalog = System.currentTimeMillis();
                             sendRequestAnalog();
-                            lastRequestAnalog = millis;
                         }
 
                         byte[] rxData = receiveBytes();
@@ -779,8 +774,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
                         {
                             vbat = v;
                         }
-
-                        Thread.sleep(10,0);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();

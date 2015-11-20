@@ -102,7 +102,7 @@ public class MSP {
 
         int start = indexOfPayloadStart(rxData,MSP_ANALOG,7);
 
-        if(start>0)
+        if(start>0 && start < rxData.length)
         {
 //            Log.i("rx",convertToString(rxData));
 
