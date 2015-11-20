@@ -105,7 +105,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private Receiver receiver;
     protected int vbat;//电压
     private boolean exit = false;
-    protected int inputMode = 0;
+    protected int inputMode = INPUT_MODE_TOUCH;
     private float joyStickRoll,joyStickPitch,joyStickYaw,joyStickThrottle;
     private float minJoyStickRoll = -0.8f;
     private float maxJoyStickRoll = 0.8f;
@@ -177,7 +177,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         connect();
         receiver = new Receiver();
 
-        startReceive();
+        startThread();
     }
 
     protected void saveSetting()
@@ -474,7 +474,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private void processMovement(MotionEvent event, int i) {
         joyStickRoll = getAxisValue(event,MotionEvent.AXIS_Z, i,true);
         joyStickPitch = getAxisValue(event,MotionEvent.AXIS_X, i,true);
-        joyStickYaw = getAxisValue(event, MotionEvent.AXIS_RY, i, true);
+        joyStickYaw = getAxisValue(event,MotionEvent.AXIS_RY, i,true);
         joyStickThrottle = getAxisValue(event, MotionEvent.AXIS_Y, i, false);
 
         minJoyStickRoll = getMaxValue(joyStickRoll, minJoyStickRoll);
@@ -487,6 +487,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         maxJoyStickThrottle = getMaxValue(joyStickRoll,maxJoyStickThrottle);
 
 //        Log.i("Joystick", "roll:" + joyStickRoll + "pitch:" + joyStickPitch + " yaw:" + joyStickYaw + " throttle:" + joyStickThrottle);
+//        Log.i("Joystick","minRoll:"+minJoyStickRoll+" maxRoll:"+maxJoyStickRoll);
     }
 
     private float getAxisValue(MotionEvent event,int axis, int historyIndex,boolean flat) {
@@ -506,7 +507,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
             }
         }
 
-        Log.i("flat",range.getFlat()+" "+" value:"+value);
+//        Log.i("flat",range.getFlat()+" "+" value:"+value);
         return value;
     }
 
@@ -524,6 +525,9 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
         return value;
     }
+
+
+
 
     public void calculateRCValues() {
         if(inputMode == INPUT_MODE_TOUCH)
@@ -571,7 +575,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         return outstart + (outend - outstart) / (inend - instart) * (value - instart);
     }
 
-    private void sendRC() {
+    private  void sendRC() {
         send(MSP.getRCPocket(rcRoll, rcPitch, rcYaw, rcThrottle, rcAUX1, rcAUX2, rcAUX3, rcAUX4));
     }
 
@@ -631,37 +635,37 @@ public abstract class RemoteActivity extends ActionBarActivity {
                 @Override
                 public void run() {
 
-                    boolean result = false;
-                    try {
+                        boolean result = false;
+                        try {
 
-                        if (connect_type == CONNECT_BLUETOOTH) {
-                            result = tBlue.connect();
-                            msg = device_name;
-                        } else if (connect_type == CONNECT_TCP) {
-                            result = tcp.connect(host, port);
-                            msg = "TCP " + host + ":" + port;
-                        } else if (connect_type == CONNECT_UDP) {
-                            result = udp.connect(host, port);
-                            msg = "UDP " + host + ":" + port + "";
+                            if (connect_type == CONNECT_BLUETOOTH) {
+                                result = tBlue.connect();
+                                msg = device_name;
+                            } else if (connect_type == CONNECT_TCP) {
+                                result = tcp.connect(host, port);
+                                msg = "TCP " + host + ":" + port;
+                            } else if (connect_type == CONNECT_UDP) {
+                                result = udp.connect(host, port);
+                                msg = "UDP " + host + ":" + port + "";
+                            }
+
+                            if(result)
+                                msg += " Connected";
+                            else
+                                msg+= " Connect Failed";
+                        }
+                        catch(Exception e)
+                        {
+                            Log.e("MWC Remote","Connect Error",e);
                         }
 
-                        if(result)
-                            msg += " Connected";
-                        else
-                            msg+= " Connect Failed";
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(RemoteActivity.this, msg, Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
-                    catch(Exception e)
-                    {
-                        Log.e("MWC Remote","Connect Error",e);
-                    }
-
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(RemoteActivity.this, msg, Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
             }.start();
         }
     }
@@ -713,7 +717,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         return result;
     }
 
-    public void send(byte[] data)
+    public synchronized void send(byte[] data)
     {
         if(connect_type==CONNECT_BLUETOOTH)
         {
@@ -737,54 +741,80 @@ public abstract class RemoteActivity extends ActionBarActivity {
     }
 
     //接收数据
-    protected void startReceive()
+    protected void startThread()
     {
         final Handler handler = new Handler();
-        new Thread(new Runnable() {
+        Thread uiThread = new Thread(new Runnable() {
             @Override
             public void run() {
+                Runnable processUpdateUI = new Runnable() {
+                    @Override
+                    public void run() {
+                        updateUI();
+                    }
+                };
+
                 try {
-                    Thread.sleep(100,0);
-
-                    while((!Thread.currentThread().isInterrupted()) && (!exit) )
-                    {
-                        Log.i("cycle", (50 - (System.currentTimeMillis() - lastSend)) + "");
-                        Thread.sleep(Math.max(0, 40 - (System.currentTimeMillis() - lastSend)), 0);
-                        lastSend = System.currentTimeMillis();
-
-                        calculateRCValues();
-                        sendRC();
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                updateUI();
-                            }
-                        });
-
-                        if(System.currentTimeMillis() - lastRequestAnalog > 500)
-                        {
-                            lastRequestAnalog = System.currentTimeMillis();
-                            sendRequestAnalog();
-                        }
-
-                        byte[] rxData = receiveBytes();
-
-                        int v = MSP.getVbat(rxData);
-                        if(v>0)
-                        {
-                            vbat = v;
-                        }
+                    while ((!Thread.currentThread().isInterrupted()) && (!exit)) {
+                        handler.post(processUpdateUI);
+                        Thread.sleep(80, 0);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-
-
             }
-        }).start();
+        });
+
+        Thread requestThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while ((!Thread.currentThread().isInterrupted()) && (!exit)) {
+                        sendRequestAnalog();
+
+                        Thread.sleep(1000, 0);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        Thread rcThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(100, 0);
+
+                    while ((!Thread.currentThread().isInterrupted()) && (!exit)) {
+                        calculateRCValues();
+                        sendRC();
+
+                        byte[] rxData = receiveBytes();
+                        int v = MSP.getVbat(rxData);
+                        if (v > 0) {
+                            vbat = v;
+                        }
+
+                        Thread.sleep(Math.max(0, 20 - (System.currentTimeMillis() - lastSend)), 0);
+
+                        long dur = System.currentTimeMillis() - lastSend;
+                        fps = (int) Math.round(1000.0 / (float) dur);
+
+                        lastSend = System.currentTimeMillis();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        uiThread.start();
+        rcThread.start();
+        requestThread.start();
     }
 
-    private byte[] receiveBytes() {
+    private synchronized byte[] receiveBytes() {
         byte[] rxData = new byte[0];
         try {
             if (connect_type == CONNECT_BLUETOOTH) {

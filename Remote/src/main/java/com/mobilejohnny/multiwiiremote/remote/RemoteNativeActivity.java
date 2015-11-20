@@ -176,7 +176,6 @@ public class RemoteNativeActivity extends RemoteActivity {
 
     @Override
     protected void updateUI() {
-
         txtThrottle.setText(rcThrottle+"");
         txtRoll.setText(rcRoll+"");
         txtPitch.setText(rcPitch+"");
@@ -184,13 +183,13 @@ public class RemoteNativeActivity extends RemoteActivity {
         txtAUX1.setText(rcAUX1+"");
         txtAUX2.setText(rcAUX2+"");
         txtAUX3.setText(rcAUX3+"");
-        txtAUX4.setText(rcAUX4+"");
+        txtAUX4.setText(rcAUX4 + "");
 
         if(switchArm.isChecked()&& rcAUX1 == minRC)
         {
             switchArm.setChecked(false);
         }
-        else if(switchArm.isChecked() == false && rcAUX1 == maxRC)
+        else if(!switchArm.isChecked() && rcAUX1 == maxRC)
         {
             switchArm.setChecked(true);
         }
@@ -202,18 +201,6 @@ public class RemoteNativeActivity extends RemoteActivity {
         joyStick.setPadPosition(Math.round(map(rcRoll, minRC, maxRC, 0, 100)), Math.round(map(rcPitch, minRC, maxRC, 100, 0)));
         progressBarThrottle.setValue(Math.round(map(rcThrottle, minThrottleRC, maxThrottleRC, 0, 100)));
 
-        if(countCycle >= 9)
-        {
-            long currentTime = System.currentTimeMillis();
-            long dur = currentTime - time;
-            time = currentTime;
-
-            fps = (int) Math.round(10000.0 / (float) dur);
-            txtFPS.setText(fps+"");
-            countCycle = 0;
-        }
-        else{
-            countCycle++;
-        }
+        txtFPS.setText(fps+"");
     }
 }
