@@ -34,9 +34,9 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private static final int USB_OTG_RESULT_FAILED = 0;
     private static final int USB_OTG_RESULT_SUCCESS = 1;
     private static final int USB_OTG_RESULT_NO_PERMISSION = 2;
-    protected static final int INPUT_MODE_GRAVITY = 1;
+    protected static final int INPUT_MODE_TOUCH = 1;
     protected static final int INPUT_MODE_JOYSTICK = 2;
-    protected static final int INPUT_MODE_NONE = 0;
+
     // Sensor objects
     static SensorManager mSensorManager;
     static Sensor accelerometer;
@@ -65,7 +65,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
 //    private static final byte[] MSP_HEADER_BYTE = MSP_HEADER.getBytes();
 //    private static final int headerLength = MSP_HEADER_BYTE.length;
 
-    static final int minRC = 1150, maxRC = 1850,medRC = 1500, minThrottleRC = 1000, maxThrottleRC = 2000;
+    static final int minRC = 1150, maxRC = 1850,medRC = 1500, minThrottleRC = 1150, maxThrottleRC = 1850;
 
     //, medRC = 1500;
     protected static int medRollRC = medRC,medPitchRC = medRC,medYawRC = medRC;
@@ -105,17 +105,18 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private Receiver receiver;
     protected int vbat;//电压
     private boolean exit = false;
-    protected int inputMode = INPUT_MODE_NONE;
+    protected int inputMode = INPUT_MODE_TOUCH;
     private float joyStickRoll,joyStickPitch,joyStickYaw,joyStickThrottle;
-    private float minJoyStickRoll = 0.9f;
-    private float maxJoyStickRoll = -0.9f;
-    private float minJoyStickPitch = 0.9f;
-    private float maxJoyStickPitch = -0.9f;
-    private float minJoyStickYaw = -0.9f;
-    private float maxJoyStickYaw = 0.9f;
+    private float minJoyStickRoll = -0.8f;
+    private float maxJoyStickRoll = 0.8f;
+    private float minJoyStickPitch = -0.8f;
+    private float maxJoyStickPitch = 0.8f;
+    private float minJoyStickYaw = -0.8f;
+    private float maxJoyStickYaw = 0.8f;
     private float minJoyStickThrottle = -0.9f;
     private float maxJoyStickThrottle = 0.9f;
     private long lastARMTime;
+    protected boolean enableGravity = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -485,7 +486,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
         minJoyStickThrottle = getMaxValue(joyStickRoll, minJoyStickThrottle);
         maxJoyStickThrottle = getMaxValue(joyStickRoll,maxJoyStickThrottle);
 
-//        Log.i("Joystick", "roll:" + joyStickRoll + "pitch:" + joyStickPitch + " yaw:" + joyStickYaw + " throttle:" + joyStickThrottle);
+        Log.i("Joystick", "roll:" + joyStickRoll + "pitch:" + joyStickPitch + " yaw:" + joyStickYaw + " throttle:" + joyStickThrottle);
     }
 
     private float getAxisValue(MotionEvent event,int axis, int historyIndex,boolean flat) {
@@ -525,28 +526,32 @@ public abstract class RemoteActivity extends ActionBarActivity {
     }
 
 
+
+
     public void calculateRCValues() {
-        if(inputMode == INPUT_MODE_GRAVITY)
+        if(inputMode == INPUT_MODE_TOUCH)
         {
-            rcRoll =  Math.round(map(rotationY, minY, maxY, minRC, maxRC));
-            rcPitch =  Math.round(map(rotationX, minX, maxX, maxRC, minRC));
+            if(enableGravity) {
+                rcRoll = Math.round(map(rotationY, minY, maxY, minRC, maxRC));
+                rcPitch = Math.round(map(rotationX, minX, maxX, maxRC, minRC));
+            }
+            else
+            {
+                rcRoll = medRollRC;
+                rcPitch = medPitchRC;
+                rcYaw = medYawRC;
+            }
         }
         else if(inputMode == INPUT_MODE_JOYSTICK)
         {
-            float rollRange = getMaxAbs( minJoyStickRoll, maxJoyStickRoll);
-            float pitchRange = getMaxAbs( minJoyStickPitch, maxJoyStickPitch);
-            float yawRange = getMaxAbs( minJoyStickYaw, maxJoyStickYaw);
+            float rollRange = getMinAbs(minJoyStickRoll, maxJoyStickRoll);
+            float pitchRange = getMinAbs(minJoyStickPitch, maxJoyStickPitch);
+            float yawRange = getMinAbs(minJoyStickYaw, maxJoyStickYaw);
 
-            rcRoll = Math.round(map(joyStickRoll,rollRange, rollRange*-1, minRC, maxRC));
-            rcPitch =  Math.round(map(joyStickPitch, pitchRange, pitchRange*-1, maxRC, minRC));
-            rcYaw =  Math.round(map(joyStickYaw, yawRange, yawRange*-1, maxRC, minRC));
+            rcRoll = Math.round(map(joyStickRoll,rollRange*-1, rollRange, maxRC, minRC));
+            rcPitch =  Math.round(map(joyStickPitch, pitchRange*-1, pitchRange, minRC, maxRC));
+            rcYaw =  Math.round(map(joyStickYaw, yawRange*-1, yawRange,maxRC, minRC ));
             rcThrottle =  Math.round(map(joyStickThrottle, minJoyStickThrottle, maxJoyStickThrottle, maxThrottleRC, minThrottleRC));
-        }
-        else
-        {
-            rcRoll = medRollRC;
-            rcPitch = medPitchRC;
-            rcYaw = medYawRC;
         }
 
         rcThrottle = constrain(rcThrottle, minThrottleRC, maxThrottleRC);
@@ -555,9 +560,9 @@ public abstract class RemoteActivity extends ActionBarActivity {
         rcYaw= constrain(rcYaw, minRC, maxRC);
     }
 
-    public float getMaxAbs(float f1,float f2)
+    public float getMinAbs(float f1,float f2)
     {
-        return Math.max(Math.abs(f1), Math.abs(f2));
+        return Math.min(Math.abs(f1), Math.abs(f2));
     }
 
     protected int constrain(int val,int min,int max)

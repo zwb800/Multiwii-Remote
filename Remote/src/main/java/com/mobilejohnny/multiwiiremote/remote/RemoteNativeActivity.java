@@ -87,7 +87,6 @@ public class RemoteNativeActivity extends RemoteActivity {
                 int action = motionEvent.getAction() & MotionEvent.ACTION_MASK;
                 int index = (motionEvent.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK) >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
 
-
 //               if(action!=MotionEvent.ACTION_MOVE)
 //                Log.i("RemoteNative",action+" "+index+" "+motionEvent.getPointerCount());
 
@@ -106,13 +105,13 @@ public class RemoteNativeActivity extends RemoteActivity {
                         if (altHoldEnable) {
                             rcAUX2 = minRC;
                         }
-                        inputMode = INPUT_MODE_NONE;
+
                     } else {
                         lastY[1] = y;
                         middleX = x;
-
-                        inputMode = INPUT_MODE_GRAVITY;
+                        enableGravity = true;
                     }
+                    inputMode = INPUT_MODE_TOUCH;
 
                 } else if (action == MotionEvent.ACTION_MOVE) {
                     for (int i = 0; i < motionEvent.getPointerCount(); i++) {
@@ -164,8 +163,7 @@ public class RemoteNativeActivity extends RemoteActivity {
                             medRollRC = (int) (map(rotationY, minY, maxY, minRC, maxRC));
                             medPitchRC = (int) (map(rotationX, minX, maxX, maxRC, minRC));
                         }
-
-                        inputMode = INPUT_MODE_NONE;
+                        enableGravity = false;
                     }
 
                 }
