@@ -107,14 +107,14 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private boolean exit = false;
     protected int inputMode = INPUT_MODE_NONE;
     private float joyStickRoll,joyStickPitch,joyStickYaw,joyStickThrottle;
-    private float minJoyStickRoll = 0.8f;
-    private float maxJoyStickRoll = -0.8f;
-    private float minJoyStickPitch = 0.8f;
-    private float maxJoyStickPitch = -0.8f;
-    private float minJoyStickYaw = -0.8f;
-    private float maxJoyStickYaw = 0.8f;
-    private float minJoyStickThrottle = -0.8f;
-    private float maxJoyStickThrottle = 0.8f;
+    private float minJoyStickRoll = 0.9f;
+    private float maxJoyStickRoll = -0.9f;
+    private float minJoyStickPitch = 0.9f;
+    private float maxJoyStickPitch = -0.9f;
+    private float minJoyStickYaw = -0.9f;
+    private float maxJoyStickYaw = 0.9f;
+    private float minJoyStickThrottle = -0.9f;
+    private float maxJoyStickThrottle = 0.9f;
     private long lastARMTime;
 
     @Override
@@ -137,14 +137,14 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
         medPitchRC = Integer.parseInt(preference.getString("middle_pitch", "1500"));
         medRollRC = Integer.parseInt(preference.getString("middle_roll", "1500"));
-        minJoyStickRoll = preference.getFloat("min_roll", minJoyStickRoll);
-        maxJoyStickRoll = preference.getFloat("max_roll", maxJoyStickRoll);
-        minJoyStickPitch = preference.getFloat("min_pitch", minJoyStickPitch);
-        maxJoyStickPitch = preference.getFloat("max_pitch", maxJoyStickPitch);
-        minJoyStickYaw = preference.getFloat("min_yaw", minJoyStickYaw);
-        maxJoyStickYaw = preference.getFloat("max_yaw", maxJoyStickYaw);
-        minJoyStickThrottle = preference.getFloat("min_throttle", minJoyStickThrottle);
-        maxJoyStickThrottle = preference.getFloat("max_throttle", maxJoyStickThrottle);
+//        minJoyStickRoll = preference.getFloat("min_roll", minJoyStickRoll);
+//        maxJoyStickRoll = preference.getFloat("max_roll", maxJoyStickRoll);
+//        minJoyStickPitch = preference.getFloat("min_pitch", minJoyStickPitch);
+//        maxJoyStickPitch = preference.getFloat("max_pitch", maxJoyStickPitch);
+//        minJoyStickYaw = preference.getFloat("min_yaw", minJoyStickYaw);
+//        maxJoyStickYaw = preference.getFloat("max_yaw", maxJoyStickYaw);
+//        minJoyStickThrottle = preference.getFloat("min_throttle", minJoyStickThrottle);
+//        maxJoyStickThrottle = preference.getFloat("max_throttle", maxJoyStickThrottle);
 
         Log.i("JoyStick","minRoll:"+minJoyStickRoll+" maxRoll:"+maxJoyStickRoll);
 
@@ -421,7 +421,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
         if(keyCode == KeyEvent.KEYCODE_BUTTON_1)
         {
             arm(false);
-            isDown = false;
             return true;
         }
         else if(keyCode == KeyEvent.KEYCODE_BACK)
@@ -433,18 +432,18 @@ public abstract class RemoteActivity extends ActionBarActivity {
         return super.onKeyDown(keyCode, event);
     }
 
-    boolean isDown = false;
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if ((event.getSource() & InputDevice.SOURCE_KEYBOARD)
                 == InputDevice.SOURCE_KEYBOARD) {
-            Log.i("Keydown", keyCode + "");
-            if (keyCode == KeyEvent.KEYCODE_BUTTON_1) {
-                if (!isDown) {
+            if(event.getRepeatCount()==0)
+            {
+                Log.i("Keydown", keyCode + "");
+                if (keyCode == KeyEvent.KEYCODE_BUTTON_1) {
                     arm(true);
-                    isDown = true;
+                    return true;
                 }
-                return true;
             }
         }
         return super.onKeyDown(keyCode, event);
@@ -472,10 +471,10 @@ public abstract class RemoteActivity extends ActionBarActivity {
     }
 
     private void processMovement(MotionEvent event, int i) {
-        joyStickRoll = getAxisValue(event,MotionEvent.AXIS_Z, i);
-        joyStickPitch = getAxisValue(event,MotionEvent.AXIS_X, i);
-        joyStickYaw = getAxisValue(event,MotionEvent.AXIS_RY, i);
-        joyStickThrottle = getAxisValue(event, MotionEvent.AXIS_Y, i);
+        joyStickRoll = getAxisValue(event,MotionEvent.AXIS_Z, i,true);
+        joyStickPitch = getAxisValue(event,MotionEvent.AXIS_X, i,true);
+        joyStickYaw = getAxisValue(event,MotionEvent.AXIS_RY, i,true);
+        joyStickThrottle = getAxisValue(event, MotionEvent.AXIS_Y, i, false);
 
         minJoyStickRoll = getMaxValue(joyStickRoll, minJoyStickRoll);
         maxJoyStickRoll = getMaxValue(joyStickRoll, maxJoyStickRoll);
@@ -489,8 +488,24 @@ public abstract class RemoteActivity extends ActionBarActivity {
 //        Log.i("Joystick", "roll:" + joyStickRoll + "pitch:" + joyStickPitch + " yaw:" + joyStickYaw + " throttle:" + joyStickThrottle);
     }
 
-    private float getAxisValue(MotionEvent event,int axis, int historyIndex) {
+    private float getAxisValue(MotionEvent event,int axis, int historyIndex,boolean flat) {
         float value = historyIndex> -1 ? event.getHistoricalAxisValue(axis,historyIndex):event.getAxisValue(axis);
+        InputDevice.MotionRange range = event.getDevice().getMotionRange(axis, event.getSource());
+
+        if(flat) {
+            if (Math.abs(value) < range.getFlat()) {
+                return 0;
+            }
+            if(value>0) {
+                value -= range.getFlat();
+            }
+            else
+            {
+                value += range.getFlat();
+            }
+        }
+
+        Log.i("flat",range.getFlat()+" "+" value:"+value);
         return value;
     }
 
@@ -518,9 +533,13 @@ public abstract class RemoteActivity extends ActionBarActivity {
         }
         else if(inputMode == INPUT_MODE_JOYSTICK)
         {
-            rcRoll =  Math.round(map(joyStickRoll, minJoyStickRoll, maxJoyStickRoll, minRC, maxRC));
-            rcPitch =  Math.round(map(joyStickPitch, minJoyStickPitch, maxJoyStickPitch, maxRC, minRC));
-            rcYaw =  Math.round(map(joyStickYaw, minJoyStickYaw, maxJoyStickYaw, maxRC, minRC));
+            float rollRange = getMaxAbs( minJoyStickRoll, maxJoyStickRoll);
+            float pitchRange = getMaxAbs( minJoyStickPitch, maxJoyStickPitch);
+            float yawRange = getMaxAbs( minJoyStickYaw, maxJoyStickYaw);
+
+            rcRoll = Math.round(map(joyStickRoll,rollRange, rollRange*-1, minRC, maxRC));
+            rcPitch =  Math.round(map(joyStickPitch, pitchRange, pitchRange*-1, maxRC, minRC));
+            rcYaw =  Math.round(map(joyStickYaw, yawRange, yawRange*-1, maxRC, minRC));
             rcThrottle =  Math.round(map(joyStickThrottle, minJoyStickThrottle, maxJoyStickThrottle, maxThrottleRC, minThrottleRC));
         }
         else
@@ -536,10 +555,14 @@ public abstract class RemoteActivity extends ActionBarActivity {
         rcYaw= constrain(rcYaw, minRC, maxRC);
     }
 
+    public float getMaxAbs(float f1,float f2)
+    {
+        return Math.max(Math.abs(f1), Math.abs(f2));
+    }
+
     protected int constrain(int val,int min,int max)
     {
         return Math.max(Math.min(val, max), min);
-
     }
 
     public static final float map(float value, float instart, float inend, float outstart, float outend) {

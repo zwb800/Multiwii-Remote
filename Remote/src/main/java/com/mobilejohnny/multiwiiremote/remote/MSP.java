@@ -10,7 +10,6 @@ import java.util.List;
  */
 public class MSP {
 
-    //<协议头>,<方向>,<长度>,<消息ID>,<数据>,<crc>
     private static final String MSP_HEADER = "$M<";//协议头
 
     private static final int MSP_SET_RAW_RC = 200;//设置RC数据的消息ID
