@@ -117,6 +117,7 @@ public abstract class RemoteActivity extends ActionBarActivity {
     private float maxJoyStickThrottle = 0.9f;
     private long lastARMTime;
     protected boolean enableGravity = false;
+    private int fpsCycle = 49;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -756,8 +757,10 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
                 try {
                     while ((!Thread.currentThread().isInterrupted()) && (!exit)) {
+//                        long times = System.currentTimeMillis();
                         handler.post(processUpdateUI);
-                        Thread.sleep(80, 0);
+//                        Log.i("UI", (System.currentTimeMillis() - times)+"");
+                        Thread.sleep(100, 0);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -787,6 +790,8 @@ public abstract class RemoteActivity extends ActionBarActivity {
                     Thread.sleep(100, 0);
 
                     while ((!Thread.currentThread().isInterrupted()) && (!exit)) {
+//                        long times = System.currentTimeMillis();
+
                         calculateRCValues();
                         sendRC();
 
@@ -796,10 +801,19 @@ public abstract class RemoteActivity extends ActionBarActivity {
                             vbat = v;
                         }
 
+//                        Log.i("RC", (System.currentTimeMillis() - times)+"");
+
                         Thread.sleep(Math.max(0, 20 - (System.currentTimeMillis() - lastSend)), 0);
 
-                        long dur = System.currentTimeMillis() - lastSend;
-                        fps = (int) Math.round(1000.0 / (float) dur);
+                        if(fpsCycle < 49)
+                        {
+                            fpsCycle ++;
+                        }
+                        else{
+                            long dur = System.currentTimeMillis() - lastSend;
+                            fps = (int) Math.round(1000.0 / (float) dur);
+                            fpsCycle = 0;
+                        }
 
                         lastSend = System.currentTimeMillis();
                     }
