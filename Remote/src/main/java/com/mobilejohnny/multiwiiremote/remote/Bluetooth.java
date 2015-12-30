@@ -1,10 +1,12 @@
 package com.mobilejohnny.multiwiiremote.remote;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 
 import java.io.IOException;
@@ -12,6 +14,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -50,7 +53,8 @@ private String device_name=null;
 
     public Set<BluetoothDevice> getBondedDevices()
     {
-
+        if(localAdapter==null)
+            return new HashSet<BluetoothDevice>();
         return localAdapter.getBondedDevices();
     }
 
@@ -77,10 +81,15 @@ private String device_name=null;
     {
         Log.i(TAG, "Creating RFCOMM socket...");
         try {
-            Method m = remoteDevice.getClass().getMethod
-                    ("createRfcommSocket", new Class[] { int.class});
-//            socket = (BluetoothSocket) m.invoke(remoteDevice, 1);
-        socket = remoteDevice.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD_MR1)
+            {
+                socket = createInsecureSocket();
+            }
+            else
+            {
+                Method m = remoteDevice.getClass().getMethod("createRfcommSocket", new Class[] { int.class});
+                socket = (BluetoothSocket) m.invoke(remoteDevice, 1);
+            }
             Log.i(TAG, "RFCOMM socket created.");
         }
         catch (NoSuchMethodException e) {
@@ -101,13 +110,22 @@ private String device_name=null;
 //        }
         catch (IOException e) {
             e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
         }
 
         Log.i(TAG, "Got socket for device "+socket.getRemoteDevice());
         localAdapter.cancelDiscovery();
     }
 
-  public boolean connect()
+    @TargetApi(Build.VERSION_CODES.GINGERBREAD_MR1)
+    private BluetoothSocket createInsecureSocket() throws IOException {
+         return  remoteDevice.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
+    }
+
+    public boolean connect()
   {
       findDevice();
       createSocket();

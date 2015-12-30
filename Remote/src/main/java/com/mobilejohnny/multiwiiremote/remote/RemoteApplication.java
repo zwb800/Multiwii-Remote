@@ -18,10 +18,10 @@ public class RemoteApplication extends Application {
     private GoogleAnalytics analytics;
     private static Tracker tracker;
 
-    public static Tracker tracker()
-    {
-        return tracker;
-    }
+//    public static Tracker tracker()
+//    {
+//        return tracker;
+//    }
 
     @Override
     public void onCreate() {
@@ -31,12 +31,10 @@ public class RemoteApplication extends Application {
         analytics.setLocalDispatchPeriod(1800);
 
         tracker = analytics.newTracker("UA-15153331-6"); // Replace with actual tracker/property Id
-        tracker.enableExceptionReporting(true);
+//        tracker.enableExceptionReporting(true);
         tracker.enableAdvertisingIdCollection(true);
         tracker.enableAutoActivityTracking(true);
 
-//        tracker.send(new HitBuilders.ScreenViewBuilder().build());
-//        analytics.dispatchLocalHits();
 
         MiStatInterface.initialize(this, MI_APPID, MI_APP_KEY, CHANNEL);
         MiStatInterface.setUploadPolicy(MiStatInterface.UPLOAD_POLICY_BATCH,0);

@@ -50,21 +50,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
     static float pitch         = 0.0f;
     static float roll          = 0.0f;
 
-    //Time control variables
-    static int cycle = 0;   //Activity
-    static int lastCycle = 0;
-    static int cycleAcc = 0;  //Gravity
-    static int lastCycleAcc = 0;
-    static int cycleMag = 0;  //MagneticField
-    static int lastCycleMag = 0;
-    static int cycleGPS = 0;  //GlobalPosition
-    static int lastCycleGPS = 0;
-
-
-
-//    private static final byte[] MSP_HEADER_BYTE = MSP_HEADER.getBytes();
-//    private static final int headerLength = MSP_HEADER_BYTE.length;
-
     static final int minRC = 1150, maxRC = 1850,medRC = 1500, minThrottleRC = 1000, maxThrottleRC = 2000;
 
     //, medRC = 1500;
@@ -84,7 +69,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
     static int horizonInstrSize = 100;
 
     protected int fps;
-    private boolean unlock;
     private BroadcastReceiver BTReceiver;
     protected View decorView;
     private TCP tcp;
@@ -119,15 +103,22 @@ public abstract class RemoteActivity extends ActionBarActivity {
     protected boolean enableGravity = false;
     private int fpsCycle = 49;
 
+    private int[] keyMappings = new int[5];
+    private boolean[] keyDirection = new boolean[5];
+
+    public static final int KEY_MAPPING_PITCH = 1;
+    public static final int KEY_MAPPING_ROLL = 2;
+    public static final int KEY_MAPPING_YAW = 3;
+    public static final int KEY_MAPPING_THROTTLE = 4;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
 
         decorView = getWindow().getDecorView();
-
-
-        if(getRequestedOrientation()!=ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+        if(getRequestedOrientation()!=ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE &&
+                getRequestedOrientation() != ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
             return;
 
         decorView.setKeepScreenOn(true);//保持屏幕常亮
@@ -147,6 +138,16 @@ public abstract class RemoteActivity extends ActionBarActivity {
 //        maxJoyStickYaw = preference.getFloat("max_yaw", maxJoyStickYaw);
 //        minJoyStickThrottle = preference.getFloat("min_throttle", minJoyStickThrottle);
 //        maxJoyStickThrottle = preference.getFloat("max_throttle", maxJoyStickThrottle);
+
+        keyMappings[KEY_MAPPING_PITCH] =  Integer.parseInt(preference.getString("keymapping_pitch", MotionEvent.AXIS_X+""));
+        keyMappings[KEY_MAPPING_ROLL] =  Integer.parseInt(preference.getString("keymapping_roll", MotionEvent.AXIS_Z+""));
+        keyMappings[KEY_MAPPING_YAW] =  Integer.parseInt(preference.getString("keymapping_yaw", MotionEvent.AXIS_RY+""));
+        keyMappings[KEY_MAPPING_THROTTLE] =  Integer.parseInt(preference.getString("keymapping_throttle", MotionEvent.AXIS_Y+""));
+
+        keyDirection[KEY_MAPPING_PITCH] = preference.getBoolean("keymapping_pitch_dir", false);
+        keyDirection[KEY_MAPPING_ROLL] = preference.getBoolean("keymapping_roll_dir",false);
+        keyDirection[KEY_MAPPING_YAW] = preference.getBoolean("keymapping_yaw_dir",false);
+        keyDirection[KEY_MAPPING_THROTTLE] = preference.getBoolean("keymapping_throttle_dir",false);
 
         Log.i("JoyStick","minRoll:"+minJoyStickRoll+" maxRoll:"+maxJoyStickRoll);
 
@@ -410,8 +411,6 @@ public abstract class RemoteActivity extends ActionBarActivity {
         mSensorManager.registerListener(sensorEventListener, gravity, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
-
-
     public void exitSensor()
     {
         if (sensorAvailable) mSensorManager.unregisterListener(sensorEventListener);
@@ -473,29 +472,23 @@ public abstract class RemoteActivity extends ActionBarActivity {
     }
 
     private void processMovement(MotionEvent event, int i) {
-        joyStickRoll = getAxisValue(event,MotionEvent.AXIS_Z, i,true);
-        joyStickPitch = getAxisValue(event,MotionEvent.AXIS_X, i,true);
-        joyStickYaw = getAxisValue(event,MotionEvent.AXIS_RY, i,true);
-        joyStickThrottle = getAxisValue(event, MotionEvent.AXIS_Y, i, false);
+        joyStickPitch = getAxisValue(event,keyMappings[KEY_MAPPING_PITCH], i,true);
+        joyStickRoll = getAxisValue(event,keyMappings[KEY_MAPPING_ROLL], i,true);
+        joyStickYaw = getAxisValue(event,keyMappings[KEY_MAPPING_YAW], i,true);
+        joyStickThrottle = getAxisValue(event, keyMappings[KEY_MAPPING_THROTTLE], i, false);
 
-        minJoyStickRoll = getMaxValue(joyStickRoll, minJoyStickRoll);
-        maxJoyStickRoll = getMaxValue(joyStickRoll, maxJoyStickRoll);
-        minJoyStickPitch = getMaxValue(joyStickRoll, minJoyStickPitch);
-        maxJoyStickPitch = getMaxValue(joyStickRoll,maxJoyStickPitch);
-        minJoyStickYaw = getMaxValue(joyStickRoll, minJoyStickYaw);
-        maxJoyStickYaw = getMaxValue(joyStickRoll,maxJoyStickYaw);
-        minJoyStickThrottle = getMaxValue(joyStickRoll, minJoyStickThrottle);
-        maxJoyStickThrottle = getMaxValue(joyStickRoll,maxJoyStickThrottle);
+        getJoyStickRange();
 
 //        Log.i("Joystick", "roll:" + joyStickRoll + "pitch:" + joyStickPitch + " yaw:" + joyStickYaw + " throttle:" + joyStickThrottle);
 //        Log.i("Joystick","minRoll:"+minJoyStickRoll+" maxRoll:"+maxJoyStickRoll);
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
     private float getAxisValue(MotionEvent event,int axis, int historyIndex,boolean flat) {
         float value = historyIndex> -1 ? event.getHistoricalAxisValue(axis,historyIndex):event.getAxisValue(axis);
         InputDevice.MotionRange range = event.getDevice().getMotionRange(axis, event.getSource());
 
-        if(flat) {
+        if(flat && range !=null) {
             if (Math.abs(value) < range.getFlat()) {
                 return 0;
             }
@@ -510,6 +503,17 @@ public abstract class RemoteActivity extends ActionBarActivity {
 
 //        Log.i("flat",range.getFlat()+" "+" value:"+value);
         return value;
+    }
+
+    private void getJoyStickRange() {
+        minJoyStickRoll = getMaxValue(joyStickRoll, minJoyStickRoll);
+        maxJoyStickRoll = getMaxValue(joyStickRoll, maxJoyStickRoll);
+        minJoyStickPitch = getMaxValue(joyStickRoll, minJoyStickPitch);
+        maxJoyStickPitch = getMaxValue(joyStickRoll,maxJoyStickPitch);
+        minJoyStickYaw = getMaxValue(joyStickRoll, minJoyStickYaw);
+        maxJoyStickYaw = getMaxValue(joyStickRoll,maxJoyStickYaw);
+        minJoyStickThrottle = getMaxValue(joyStickRoll, minJoyStickThrottle);
+        maxJoyStickThrottle = getMaxValue(joyStickRoll,maxJoyStickThrottle);
     }
 
     private float getMaxValue(float n,float ori)
@@ -550,9 +554,9 @@ public abstract class RemoteActivity extends ActionBarActivity {
             float pitchRange = getMinAbs(minJoyStickPitch, maxJoyStickPitch);
             float yawRange = getMinAbs(minJoyStickYaw, maxJoyStickYaw);
 
-            rcRoll = Math.round(map(joyStickRoll,rollRange*-1, rollRange, maxRC, minRC));
-            rcPitch =  Math.round(map(joyStickPitch, pitchRange*-1, pitchRange, minRC, maxRC));
-            rcYaw =  Math.round(map(joyStickYaw, yawRange*-1, yawRange,maxRC, minRC ));
+            rcRoll = Math.round(map(joyStickRoll,rollRange*(keyDirection[KEY_MAPPING_ROLL]?-1:1), rollRange*(keyDirection[KEY_MAPPING_ROLL]?1:-1), maxRC, minRC));
+            rcPitch =  Math.round(map(joyStickPitch, pitchRange*(keyDirection[KEY_MAPPING_PITCH]?-1:1), pitchRange*(keyDirection[KEY_MAPPING_PITCH]?1:-1), minRC, maxRC));
+            rcYaw =  Math.round(map(joyStickYaw, yawRange*(keyDirection[KEY_MAPPING_YAW]?-1:1), yawRange*(keyDirection[KEY_MAPPING_YAW]?1:-1),maxRC, minRC ));
             rcThrottle =  Math.round(map(joyStickThrottle, minJoyStickThrottle, maxJoyStickThrottle, maxThrottleRC, minThrottleRC));
         }
 

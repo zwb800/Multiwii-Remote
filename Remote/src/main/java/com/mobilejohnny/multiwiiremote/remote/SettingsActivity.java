@@ -1,12 +1,13 @@
 package com.mobilejohnny.multiwiiremote.remote;
 
+import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.Intent;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.*;
-import android.text.TextUtils;
+import android.view.View;
+import android.widget.Button;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -19,83 +20,69 @@ import android.text.TextUtils;
  * href="http://developer.android.com/guide/topics/ui/settings.html">Settings
  * API Guide</a> for more information on developing a Settings UI.
  */
-public class SettingsActivity extends PreferenceActivity {
-
-
+public class SettingsActivity extends BaseSettingsActivity {
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        getFragmentManager()
-                .beginTransaction()
-                .replace(android.R.id.content, new GeneralPreferenceFragment())
-                .commit();
-    }
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        finish();
-        //startActivity(getIntent());
-    }
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+        {
+            Button btnStart = new Button(this);
+            btnStart.setText("Start");
+            btnStart.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    startActivity(new Intent("com.mobilejohnny.multiwiiremote.remote.action.REMOTE_NATIVE"));
+                }
+            });
 
-    /**
-     * A preference value change listener that updates the preference's summary
-     * to reflect its new value.
-     */
-    private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object value) {
-            String stringValue = value.toString();
+//            setListFooter(btnStart);
 
-            if (preference instanceof ListPreference) {
-                // For list preferences, look up the correct display value in
-                // the preference's 'entries' list.
-                ListPreference listPreference = (ListPreference) preference;
-                int index = listPreference.findIndexOfValue(stringValue);
-
-                // Set the summary to reflect the new value.
-                preference.setSummary(
-                        index >= 0
-                                ? listPreference.getEntries()[index]
-                                : null);
-
-            }  else {
-                // For all other preferences, set the summary to the value's
-                // simple string representation.
-                preference.setSummary(stringValue);
-            }
-            return true;
+            getFragmentManager().beginTransaction()
+                    .replace(android.R.id.content, new SettingsFragment())
+                    .commit();
+            return;
         }
-    };
 
-    /**
-     * Binds a preference's summary to its value. More specifically, when the
-     * preference's value is changed, its summary (line of text below the
-     * preference title) is updated to reflect the value. The summary is also
-     * immediately updated upon calling this method. The exact display format is
-     * dependent on the type of preference.
-     *
-     * @see #sBindPreferenceSummaryToValueListener
-     */
-    private static void bindPreferenceSummaryToValue(Preference preference) {
-        // Set the listener to watch for value changes.
-        preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
+        addPreferencesFromResource(R.xml.pref_main);
+        PreferenceCategory fakeHeader = new PreferenceCategory(this);
+        fakeHeader.setTitle("Connection");
+        getPreferenceScreen().addPreference(fakeHeader);
+        addPreferencesFromResource(R.xml.pref_connect);
 
-        // Trigger the listener immediately with the preference's
-        // current value.
+        fakeHeader = new PreferenceCategory(this);
+        fakeHeader.setTitle("Adjust");
+        getPreferenceScreen().addPreference(fakeHeader);
+        addPreferencesFromResource(R.xml.pref_adjust);
 
-        sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-                PreferenceManager
-                        .getDefaultSharedPreferences(preference.getContext())
-                        .getString(preference.getKey(), ""));
+        fakeHeader = new PreferenceCategory(this);
+        fakeHeader.setTitle("JoyStick");
+        getPreferenceScreen().addPreference(fakeHeader);
+
+        Preference preference = new Preference(this);
+        preference.setTitle("Joystick");
+        preference.setIntent(new Intent("com.mobilejohnny.multiwiiremote.remote.action.REMOTE_NATIVE"));
+        getPreferenceScreen().addPreference(preference);
+
+        final Preference prefConnection =  findPreference("connection_type");
+        final Preference prefHost =  findPreference("host");
+        final Preference prefPort =  findPreference("port");
+        final Preference prefDeviceName =  findPreference("device_name");
+        final Preference prefMiddlePitch =  findPreference("middle_pitch");
+        final Preference prefMiddleRoll =  findPreference("middle_roll");
+
+        bindPreference(prefConnection, prefHost, prefPort, prefDeviceName, prefMiddlePitch, prefMiddleRoll);
     }
 
-    public static class GeneralPreferenceFragment extends PreferenceFragment {
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static class SettingsFragment extends PreferenceFragment{
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.pref_connection);
-//            addPreferencesFromResource(R.xml.pref_adjust);
+
+            addPreferencesFromResource(R.xml.pref_connect);
+            addPreferencesFromResource(R.xml.pref_adjust);
+            addPreferencesFromResource(R.xml.pref_headers);
 
             final Preference prefConnection =  findPreference("connection_type");
             final Preference prefHost =  findPreference("host");
@@ -103,47 +90,40 @@ public class SettingsActivity extends PreferenceActivity {
             final Preference prefDeviceName =  findPreference("device_name");
             final Preference prefMiddlePitch =  findPreference("middle_pitch");
             final Preference prefMiddleRoll =  findPreference("middle_roll");
-            final Preference prefAltHold = findPreference("alt_hold");
-            final Preference prefStart = findPreference("start");
 
-            bindPreferenceSummaryToValue(prefDeviceName);
-            bindPreferenceSummaryToValue(prefHost);
-            bindPreferenceSummaryToValue(prefPort);
-            bindPreferenceSummaryToValue(prefMiddlePitch);
-            bindPreferenceSummaryToValue(prefMiddleRoll);
-
-            prefStart.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    startActivityForResult(new Intent("com.mobilejohnny.multiwiiremote.remote.action.REMOTE_NATIVE"),10);
-                    return true;
-                }
-            });
-
-            Preference.OnPreferenceChangeListener onPreferenceChangeListener = new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object o) {
-
-                    String[] connectType = getResources().getStringArray(R.array.pref_connect_list_values);
-                    String val = o.toString();
-                    boolean isbluetooth = val.equals(connectType[0]);
-                    boolean istcpudp =val.equals(connectType[1])||val.equals(connectType[2]);
-                    prefDeviceName.setEnabled(isbluetooth);
-
-                    prefHost.setEnabled(istcpudp);
-                    prefPort.setEnabled(istcpudp);
-
-                    return sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,o);
-                }
-            };
-
-            prefConnection.setOnPreferenceChangeListener(onPreferenceChangeListener);
-            onPreferenceChangeListener.onPreferenceChange(prefConnection,PreferenceManager
-                    .getDefaultSharedPreferences(prefConnection.getContext())
-                    .getString(prefConnection.getKey(), ""));
+            bindPreference(prefConnection, prefHost, prefPort, prefDeviceName, prefMiddlePitch, prefMiddleRoll);
         }
     }
 
+    protected static void bindPreference(Preference prefConnection, final Preference prefHost, final Preference prefPort, final Preference prefDeviceName, Preference prefMiddlePitch, Preference prefMiddleRoll) {
+        bindPreferenceSummaryToValue(prefDeviceName);
+        bindPreferenceSummaryToValue(prefHost);
+        bindPreferenceSummaryToValue(prefPort);
 
+        bindPreferenceSummaryToValue(prefMiddlePitch);
+        bindPreferenceSummaryToValue(prefMiddleRoll);
 
+        final Context context = prefConnection.getContext();
+        Preference.OnPreferenceChangeListener onPreferenceChangeListener = new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object o) {
+
+                String[] connectType = context.getResources().getStringArray(R.array.pref_connect_list_values);
+                String val = o.toString();
+                boolean isbluetooth = val.equals(connectType[0]);
+                boolean istcpudp =val.equals(connectType[1])||val.equals(connectType[2]);
+                prefDeviceName.setEnabled(isbluetooth);
+
+                prefHost.setEnabled(istcpudp);
+                prefPort.setEnabled(istcpudp);
+
+                return sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,o);
+            }
+        };
+
+        prefConnection.setOnPreferenceChangeListener(onPreferenceChangeListener);
+        onPreferenceChangeListener.onPreferenceChange(prefConnection, PreferenceManager
+                .getDefaultSharedPreferences(prefConnection.getContext())
+                .getString(prefConnection.getKey(), ""));
+    }
 }

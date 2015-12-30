@@ -1,17 +1,15 @@
-<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <!-- These settings headers are only used on tablets. -->
-
-    <header
-            android:fragment="com.mobilejohnny.multiwiiremote.remote.SettingsActivity$GeneralPreferenceFragment"
-            android:title="@string/pref_header_general"/>
-
-    <header
-            android:fragment="com.mobilejohnny.multiwiiremote.remote.SettingsActivity$NotificationPreferenceFragment"
-            android:title="@string/pref_header_notifications"/>
-
-    <header
-            android:fragment="com.mobilejohnny.multiwiiremote.remote.SettingsActivity$DataSyncPreferenceFragment"
-            android:title="@string/pref_header_data_sync"/>
-
-</preference-headers>
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceCategory android:title="JoyStick">
+    <Preference android:title="JoyStick">
+        <intent
+                android:targetPackage="com.mobilejohnny.multiwiiremote.remote"
+                android:targetClass="com.mobilejohnny.multiwiiremote.remote.JoyStickSettingsActivity"/>
+    </Preference>
+    <Preference android:title="Start">
+        <intent
+                android:targetPackage="com.mobilejohnny.multiwiiremote.remote"
+                android:targetClass="com.mobilejohnny.multiwiiremote.remote.RemoteNativeActivity"/>
+    </Preference>
+</PreferenceCategory>
+</PreferenceScreen>

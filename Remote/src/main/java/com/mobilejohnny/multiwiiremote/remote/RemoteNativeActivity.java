@@ -24,7 +24,7 @@ public class RemoteNativeActivity extends RemoteActivity {
     private TextView txtYaw;
     private TextView txtAUX1;
     private TextView txtFPS;
-    private Switch switchArm;
+    private CompoundButton switchArm;
     private int halfWidth;
     private float mult;
     private float scaleYaw;
@@ -60,7 +60,7 @@ public class RemoteNativeActivity extends RemoteActivity {
         progressBarThrottle = (ProgressBarView)findViewById(R.id.progressBarThrottle);
         txtVbat = (TextView)findViewById(R.id.txtVbat);
 
-        switchArm = (Switch)findViewById(R.id.switchArm);
+        switchArm = (CompoundButton)findViewById(R.id.switchArm);
         switchArm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {

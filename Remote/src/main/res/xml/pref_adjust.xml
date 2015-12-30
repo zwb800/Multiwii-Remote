@@ -1,3 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+        <PreferenceCategory android:title="Adjust Middle Position">
+                <EditTextPreference
+                        android:key="middle_pitch"
+                        android:selectAllOnFocus="true"
+                        android:title="Pitch"
+                        android:inputType="number"
+                        android:singleLine="true"
+                        android:maxLines="1"
+                        android:maxLength="6"
+                        android:defaultValue="1500"
+                        />
 
+                <EditTextPreference
+                        android:key="middle_roll"
+                        android:selectAllOnFocus="true"
+                        android:title="Roll"
+                        android:inputType="number"
+                        android:singleLine="true"
+                        android:maxLines="1"
+                        android:maxLength="4"
+                        android:numeric="integer"
+                        android:defaultValue="1500"
+                        />
+        </PreferenceCategory>
 </PreferenceScreen>

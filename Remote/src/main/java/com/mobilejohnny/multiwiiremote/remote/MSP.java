@@ -10,10 +10,10 @@ import java.util.List;
  */
 public class MSP {
 
-    private static final String MSP_HEADER = "$M<";//Ğ­ÒéÍ·
+    private static final String MSP_HEADER = "$M<";//åè®®å¤´
 
-    private static final int MSP_SET_RAW_RC = 200;//ÉèÖÃRCÊı¾İµÄÏûÏ¢ID
-    private static final int MSP_ANALOG = 110;//»ñÈ¡µçÑ¹
+    private static final int MSP_SET_RAW_RC = 200;//è®¾ç½®RCæ•°æ®çš„æ¶ˆæ¯ID
+    private static final int MSP_ANALOG = 110;//è·å–ç”µå‹
 
     static byte[] payloadChar = new byte[16];
 
@@ -49,17 +49,17 @@ public class MSP {
 
         List<Byte> bf = new LinkedList<Byte>();
 
-        //Ìí¼ÓĞ­ÒéÍ·
+        //æ·»åŠ åè®®å¤´
         byte[] mspHead = (MSP_HEADER).getBytes();
         for (int i=0;i<mspHead.length;i++) {
             bf.add(mspHead[i]);
         }
 
-        //Ìí¼Ó³¤¶È
+        //æ·»åŠ é•¿åº¦
         byte pl_size = (byte)((payload != null ? (payload.length) : 0)&0xFF);
         bf.add(pl_size);
 
-        //Ìí¼ÓÃüÁîID
+        //æ·»åŠ å‘½ä»¤ID
         bf.add((byte)(messageid & 0xFF));
 
         if (payload != null) {
@@ -68,7 +68,7 @@ public class MSP {
             }
         }
 
-        //¼ÆËãCRC
+        //è®¡ç®—CRC
         byte checksumMSP = 0;
         for (int i = mspHead.length; i < bf.size(); i++) {
             checksumMSP ^= (bf.get(i));
@@ -84,13 +84,13 @@ public class MSP {
         return result;
     }
 
-    //Ò£¿ØĞÅºÅÊı¾İ°ü
+    //é¥æ§ä¿¡å·æ•°æ®åŒ…
     public static byte[] getRCPocket(int rcRoll,int rcPitch,int rcYaw,int rcThrottle,int rcAUX1,int rcAUX2,int rcAUX3,int rcAUX4) {
         updateRCPayload(rcRoll,rcPitch,rcYaw,rcThrottle,rcAUX1,rcAUX2,rcAUX3,rcAUX4);
-        return requestMSP(MSP_SET_RAW_RC,payloadChar);//·â×°Ğ­Òé
+        return requestMSP(MSP_SET_RAW_RC,payloadChar);//å°è£…åè®®
     }
 
-    //ÇëÇóµç³Ø¼ì²âÊı¾İ
+    //è¯·æ±‚ç”µæ± æ£€æµ‹æ•°æ®
     public static byte[]  getAnalogPocket()
     {
        return requestMSP(MSP_ANALOG,null);
@@ -115,16 +115,16 @@ public class MSP {
         int index =  -1;
         List<Byte> bf = new LinkedList<Byte>();
 
-        //Ìí¼ÓĞ­ÒéÍ·
+        //æ·»åŠ åè®®å¤´
         byte[] mspHead = ("$M>").getBytes();
         for (int i=0;i<mspHead.length;i++) {
             bf.add(mspHead[i]);
         }
 
-        //Ìí¼Ó³¤¶È
+        //æ·»åŠ é•¿åº¦
         bf.add((byte) (size&0xFF));
 
-        //Ìí¼ÓÃüÁîID
+        //æ·»åŠ å‘½ä»¤ID
         bf.add((byte) (messageID&0xFF));
 
         byte[] findArr = toArray(bf);

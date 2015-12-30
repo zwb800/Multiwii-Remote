@@ -111,8 +111,6 @@ public class UDP {
 
         } catch (SocketException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
         return  false;
